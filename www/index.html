@@ -1,0 +1,2117 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workshop DIY — 3D Maker Lab</title>
+<link rel="icon" href="icon-512.png" type="image/png">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@400;500;600;700&family=Fira+Code:wght@400;600&family=Noto+Kufi+Arabic:wght@400;600;700&family=Amiri&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+/* ═══════════════════════════════════════════
+   CSS VARIABLES & THEMES
+   ═══════════════════════════════════════════ */
+:root{
+  --bg:#020617;--bg2:#0a0f1e;--bg3:#0f172a;
+  --card:rgba(15,23,42,0.96);--border:rgba(148,163,184,0.28);
+  --text:#f9fafb;--text2:#9ca3af;
+  --accent:#22c55e;--accent2:#3b82f6;
+  --accent-soft:rgba(34,197,94,0.15);--accent-strong:rgba(34,197,94,0.7);
+  --danger:#f97373;--warn:#f59e0b;--success:#22c55e;
+  --code-bg:rgba(15,23,42,0.98);--code-border:rgba(31,41,55,0.95);
+  --font:'Rajdhani','Exo 2',system-ui,sans-serif;
+  --mono:'Fira Code',ui-monospace,Consolas,monospace;
+  --radius:12px;
+  --shadow:0 24px 60px rgba(15,23,42,0.85);
+  --transition:.25s cubic-bezier(.4,0,.2,1);
+  --floor-color:#1a2332;
+  --grid-color:rgba(34,197,94,0.25);
+  --component-metal:#4a5568;
+  --glow-color:rgba(34,197,94,0.6);
+}
+[data-theme="midnight"]{
+  --bg:#0f0e2a;--bg2:#151338;--bg3:#1a1844;--card:rgba(30,27,80,0.96);--border:rgba(99,102,241,0.3);
+  --accent:#fbbf24;--accent2:#818cf8;--accent-soft:rgba(251,191,36,0.15);--accent-strong:rgba(251,191,36,0.7);
+  --code-bg:rgba(18,16,58,0.98);--code-border:rgba(46,43,110,0.9);
+  --floor-color:#1a1844;--grid-color:rgba(251,191,36,0.2);
+  --component-metal:#5a5490;--glow-color:rgba(251,191,36,0.6);
+}
+[data-theme="sunrise"]{
+  --bg:#fef7ed;--bg2:#fff7ed;--bg3:#ffedd5;--card:rgba(255,255,255,0.96);--border:rgba(253,186,116,0.5);
+  --text:#1c1917;--text2:#78716c;--accent:#ea580c;--accent2:#dc2626;
+  --accent-soft:rgba(234,88,12,0.12);--accent-strong:rgba(234,88,12,0.7);
+  --code-bg:rgba(255,251,235,0.98);--code-border:rgba(253,230,138,0.7);
+  --shadow:0 4px 24px rgba(0,0,0,.08);
+  --floor-color:#e8dcc8;--grid-color:rgba(234,88,12,0.2);
+  --component-metal:#8b7355;--glow-color:rgba(234,88,12,0.6);
+}
+[data-theme="synthwave"]{
+  --bg:#1a0533;--bg2:#200840;--bg3:#2d0a5e;--card:rgba(38,8,69,0.96);--border:rgba(109,40,217,0.4);
+  --accent:#f472b6;--accent2:#a78bfa;--accent-soft:rgba(244,114,182,0.15);--accent-strong:rgba(244,114,182,0.7);
+  --code-bg:rgba(30,6,64,0.98);--code-border:rgba(91,33,182,0.7);
+  --floor-color:#1a0533;--grid-color:rgba(244,114,182,0.25);
+  --component-metal:#6b3fa0;--glow-color:rgba(244,114,182,0.6);
+}
+[data-theme="paper"]{
+  --bg:#f5f1eb;--bg2:#ece8e1;--bg3:#e2ddd5;--card:rgba(255,255,255,0.96);--border:rgba(214,211,205,0.7);
+  --text:#2c2825;--text2:#6b6560;--accent:#b45309;--accent2:#0369a1;
+  --accent-soft:rgba(180,83,9,0.1);--accent-strong:rgba(180,83,9,0.6);
+  --code-bg:rgba(250,248,245,0.98);--code-border:rgba(214,211,205,0.7);
+  --shadow:0 2px 12px rgba(0,0,0,.06);
+  --floor-color:#d4cec4;--grid-color:rgba(180,83,9,0.15);
+  --component-metal:#8b7e6a;--glow-color:rgba(180,83,9,0.6);
+}
+
+/* ═══════════════════════════════════════════
+   RTL SUPPORT
+   ═══════════════════════════════════════════ */
+[dir="rtl"]{direction:rtl;text-align:right}
+[dir="rtl"] .sidebar{border-right:none;border-left:1px solid var(--border)}
+[dir="rtl"] .right-panel{border-left:none;border-right:1px solid var(--border)}
+
+/* ═══════════════════════════════════════════
+   RESET & BASE
+   ═══════════════════════════════════════════ */
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font);
+  min-height:100vh;overflow:hidden;
+  transition:background var(--transition),color var(--transition);
+  background:var(--bg);
+  color:var(--text);
+}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:rgba(15,23,42,0.3);border-radius:3px}
+::-webkit-scrollbar-thumb{background:rgba(148,163,184,0.4);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:rgba(148,163,184,0.6)}
+a{color:var(--accent);text-decoration:none}
+
+/* ═══════════════════════════════════════════
+   BUTTONS
+   ═══════════════════════════════════════════ */
+button{
+  font-family:var(--font);cursor:pointer;border:none;outline:none;
+  transition:all var(--transition);border-radius:999px;
+}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;padding:10px 20px;
+  background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent),#fff 20%));
+  color:#052e16;font-weight:700;border-radius:999px;font-size:.82rem;
+  border:1px solid var(--accent-strong);letter-spacing:.06em;text-transform:uppercase;
+  box-shadow:0 8px 24px color-mix(in srgb,var(--accent),transparent 60%);
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 12px 28px color-mix(in srgb,var(--accent),transparent 40%)}
+.btn:active{transform:translateY(0);box-shadow:0 4px 12px color-mix(in srgb,var(--accent),transparent 70%)}
+.btn-sm{padding:6px 14px;font-size:.75rem}
+.btn-outline{
+  background:var(--bg3);border:1px solid var(--border);color:var(--text);
+  box-shadow:none;
+}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);box-shadow:0 0 12px var(--accent-soft)}
+.btn-danger{background:linear-gradient(135deg,#ef4444,#f97373);color:#fff;border-color:rgba(239,68,68,0.7)}
+.btn-icon{
+  width:34px;height:34px;padding:0;display:flex;align-items:center;justify-content:center;
+  background:var(--bg3);border:1px solid var(--border);color:var(--text2);font-size:1rem;
+}
+.btn-icon:hover{border-color:var(--accent);color:var(--accent)}
+.btn-icon.active{background:var(--accent);color:#052e16;border-color:var(--accent)}
+
+/* ═══════════════════════════════════════════
+   LAYOUT — FULL APP SHELL
+   ═══════════════════════════════════════════ */
+.app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+/* ─── HEADER ─── */
+.header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 16px;
+  background:linear-gradient(180deg,var(--bg2),var(--bg));
+  border-bottom:1px solid var(--border);
+  position:relative;z-index:100;gap:8px;flex-shrink:0;
+}
+.logo{display:flex;align-items:center;gap:10px}
+.logo img{width:40px;height:40px;border-radius:8px}
+.logo-text h1{
+  font-size:1.05rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;
+  background:linear-gradient(135deg,#10b981,#3b82f6,#a855f7,#ec4899,#10b981);
+  background-size:300% 300%;
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  animation:gradShift 6s ease infinite;line-height:1.2;
+}
+.logo-text span{font-size:.65rem;color:var(--text2);letter-spacing:.1em;text-transform:uppercase}
+@keyframes gradShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.header-controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.header-controls select{
+  padding:5px 10px;background:var(--bg3);color:var(--text);
+  border:1px solid var(--border);border-radius:999px;font-size:.75rem;font-family:var(--font);
+  cursor:pointer;
+}
+.score-badge{
+  display:inline-flex;align-items:center;gap:5px;padding:4px 12px;
+  border-radius:999px;border:1px solid var(--accent-strong);
+  background:radial-gradient(circle at top left,var(--accent-soft),var(--bg3));
+  font-size:.72rem;color:var(--accent);font-weight:700;letter-spacing:.08em;
+  box-shadow:0 0 14px var(--accent-soft);
+}
+
+/* ─── NAV ─── */
+.nav{
+  display:flex;gap:2px;padding:6px 16px;background:var(--bg);
+  border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;
+}
+.nav-btn{
+  padding:7px 16px;border-radius:999px;font-size:.78rem;font-weight:600;
+  background:transparent;color:var(--text2);white-space:nowrap;
+  border:1px solid transparent;letter-spacing:.06em;text-transform:uppercase;
+}
+.nav-btn.active{
+  background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent),#fff 20%));
+  color:#052e16;border-color:var(--accent-strong);
+  box-shadow:0 0 14px color-mix(in srgb,var(--accent),transparent 60%);
+}
+.nav-btn:hover:not(.active){background:var(--bg3);color:var(--text);border-color:var(--border)}
+
+/* ─── PAGES ─── */
+.page{display:none;flex:1;overflow:hidden;animation:fadeIn .35s ease}
+.page.active{display:flex;flex-direction:column}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ═══════════════════════════════════════════
+   HOME PAGE
+   ═══════════════════════════════════════════ */
+.home-page{overflow-y:auto;padding:0}
+.hero{
+  text-align:center;padding:50px 20px 30px;
+  background:
+    radial-gradient(circle at 30% 20%,var(--accent-soft),transparent 50%),
+    radial-gradient(circle at 70% 80%,rgba(59,130,246,0.1),transparent 50%);
+}
+.hero h1{
+  font-size:2.4rem;margin-bottom:6px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;
+  background:linear-gradient(135deg,#10b981,#3b82f6,#a855f7,#ec4899,#10b981);
+  background-size:300% 300%;
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:gradShift 6s ease infinite;
+}
+.hero p{color:var(--text2);font-size:1rem;margin-bottom:28px;letter-spacing:.04em}
+.hero-cards{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;max-width:900px;margin:0 auto}
+.mode-card{
+  flex:1;min-width:200px;max-width:280px;padding:24px;
+  background:radial-gradient(circle at top left,var(--card),var(--bg));
+  border:1px solid var(--border);border-radius:var(--radius);text-align:center;
+  cursor:pointer;transition:all var(--transition);position:relative;overflow:hidden;
+}
+.mode-card::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(135deg,rgba(15,23,42,0.5),transparent 60%);
+}
+.mode-card:hover{border-color:var(--accent);transform:translateY(-4px);box-shadow:0 0 0 1px var(--accent-strong),var(--shadow)}
+.mode-card .mc-icon{font-size:2.2rem;margin-bottom:10px;position:relative;z-index:1}
+.mode-card h3{margin-bottom:4px;font-size:.95rem;position:relative;z-index:1;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+.mode-card p{color:var(--text2);font-size:.78rem;position:relative;z-index:1}
+.features-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:12px;padding:20px 24px 40px;max-width:900px;margin:0 auto;
+}
+.feature-item{
+  padding:16px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  position:relative;overflow:hidden;
+}
+.feature-item .fi-icon{font-size:1.3rem;margin-bottom:6px}
+.feature-item h4{margin-bottom:3px;font-size:.82rem;letter-spacing:.04em;font-weight:600}
+.feature-item p{color:var(--text2);font-size:.75rem}
+
+/* ═══════════════════════════════════════════
+   BUILD PAGE — 3-COLUMN LAYOUT
+   ═══════════════════════════════════════════ */
+.build-page{flex-direction:row !important;overflow:hidden}
+.sidebar{
+  width:220px;flex-shrink:0;background:var(--bg2);
+  border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;
+}
+.sidebar-tabs{display:flex;border-bottom:1px solid var(--border)}
+.sidebar-tab{
+  flex:1;padding:8px 4px;font-size:.7rem;font-weight:700;text-transform:uppercase;
+  letter-spacing:.08em;background:transparent;color:var(--text2);border-radius:0;
+  border-bottom:2px solid transparent;
+}
+.sidebar-tab.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--bg3)}
+.sidebar-content{flex:1;overflow-y:auto;padding:8px}
+.sidebar-section{margin-bottom:6px}
+.sidebar-section-title{
+  font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;
+  color:var(--accent);padding:6px 8px;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;gap:6px;
+  border-radius:6px;
+}
+.sidebar-section-title:hover{background:var(--bg3)}
+.sidebar-section-title::before{content:"▸";font-size:.8rem;transition:transform .2s}
+.sidebar-section.open .sidebar-section-title::before{transform:rotate(90deg)}
+.sidebar-items{display:none;padding:4px 0}
+.sidebar-section.open .sidebar-items{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.shape-btn,.comp-btn{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:8px 4px;background:var(--bg3);border:1px solid var(--border);
+  border-radius:8px;cursor:pointer;color:var(--text);font-size:.65rem;
+  font-weight:600;text-transform:uppercase;letter-spacing:.04em;
+  transition:all .15s ease;
+}
+.shape-btn:hover,.comp-btn:hover{
+  border-color:var(--accent);transform:translateY(-1px);
+  box-shadow:0 4px 12px var(--accent-soft);
+}
+.shape-btn .s-icon,.comp-btn .c-icon{font-size:1.4rem}
+
+/* ─── CANVAS AREA ─── */
+.canvas-area{flex:1;position:relative;background:var(--bg);overflow:hidden}
+.canvas-area canvas{display:block;width:100%;height:100%}
+.mode-bar{
+  position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  display:flex;gap:4px;z-index:10;
+  background:color-mix(in srgb,var(--bg),transparent 15%);
+  backdrop-filter:blur(12px);padding:4px;border-radius:999px;
+  border:1px solid var(--border);
+}
+.canvas-info{
+  position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+  display:flex;gap:8px;z-index:10;font-size:.7rem;color:var(--text2);
+  background:color-mix(in srgb,var(--bg),transparent 15%);
+  backdrop-filter:blur(12px);padding:6px 14px;border-radius:999px;
+  border:1px solid var(--border);
+}
+.canvas-info span{display:flex;align-items:center;gap:4px}
+
+/* ─── RIGHT PANEL ─── */
+.right-panel{
+  width:200px;flex-shrink:0;background:var(--bg2);
+  border-left:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;
+  padding:10px;gap:10px;
+}
+.panel-section{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  padding:10px;
+}
+.panel-title{
+  font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;font-weight:700;
+  color:var(--accent);margin-bottom:8px;display:flex;align-items:center;gap:5px;
+}
+.color-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.color-swatch{
+  width:100%;aspect-ratio:1;border-radius:50%;border:2px solid transparent;
+  cursor:pointer;transition:all .15s;position:relative;
+}
+.color-swatch:hover{transform:scale(1.2) rotate(5deg);box-shadow:0 0 14px currentColor}
+.color-swatch:active{transform:scale(0.9)}
+.color-swatch.active{border-color:#fff;box-shadow:0 0 10px currentColor}
+.transform-controls{display:flex;flex-direction:column;gap:6px}
+.transform-row{display:flex;align-items:center;gap:6px}
+.transform-row label{font-size:.7rem;color:var(--text2);width:16px;text-align:center;font-weight:700}
+.transform-row input[type="range"]{
+  flex:1;height:4px;-webkit-appearance:none;appearance:none;
+  background:var(--border);border-radius:2px;outline:none;
+}
+.transform-row input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:14px;height:14px;border-radius:50%;
+  background:var(--accent);cursor:pointer;box-shadow:0 0 6px var(--accent-soft);
+}
+.action-row{display:flex;gap:4px;flex-wrap:wrap}
+
+/* ═══════════════════════════════════════════
+   CONSOLE PANEL (Circuit Validator)
+   ═══════════════════════════════════════════ */
+.console-panel{
+  position:absolute;bottom:10px;left:10px;width:320px;max-height:180px;
+  background:var(--code-bg);border:1px solid var(--code-border);border-radius:var(--radius);
+  overflow:hidden;z-index:10;display:none;
+  box-shadow:0 8px 24px rgba(0,0,0,0.4);
+}
+.console-panel.visible{display:block}
+.console-header{
+  padding:6px 12px;background:var(--bg3);border-bottom:1px solid var(--code-border);
+  font-size:.68rem;color:var(--text2);display:flex;justify-content:space-between;
+  letter-spacing:.06em;text-transform:uppercase;font-weight:600;
+}
+.console-body{
+  padding:8px 12px;font-family:var(--mono);font-size:.72rem;line-height:1.6;
+  max-height:130px;overflow-y:auto;
+}
+.console-line{padding:1px 0;animation:fadeIn .3s ease}
+.console-line.info{color:var(--text2)}
+.console-line.success{color:#bbf7d0}
+.console-line.warn{color:#fde68a}
+.console-line.error{color:#fca5a5}
+
+/* ═══════════════════════════════════════════
+   LEARN PAGE
+   ═══════════════════════════════════════════ */
+.learn-page{flex-direction:row !important;overflow:hidden}
+.lesson-sidebar{
+  width:240px;flex-shrink:0;background:var(--bg2);
+  border-right:1px solid var(--border);overflow-y:auto;padding:12px;
+}
+.module-title{
+  font-size:.65rem;text-transform:uppercase;letter-spacing:.12em;
+  color:var(--accent);margin:14px 0 6px;font-weight:700;
+}
+.module-title:first-child{margin-top:0}
+.lesson-item{
+  display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:999px;
+  cursor:pointer;font-size:.78rem;color:var(--text2);margin:2px 0;
+  border:1px solid transparent;font-weight:500;
+}
+.lesson-item:hover{background:var(--bg3);color:var(--text);border-color:var(--border)}
+.lesson-item.active{
+  background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent),#fff 20%));
+  color:#052e16;font-weight:700;border-color:var(--accent-strong);
+}
+.lesson-item.completed{color:var(--success)}
+.li-num{
+  width:20px;height:20px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:.65rem;font-weight:700;background:var(--bg3);
+  color:var(--text2);flex-shrink:0;
+}
+.lesson-item.active .li-num{background:rgba(0,0,0,0.2);color:#fff}
+.lesson-item.completed .li-num{background:var(--success);color:#fff}
+.lesson-content{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+.lesson-header{
+  padding:20px;background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);position:relative;overflow:hidden;
+}
+.lesson-header h2{font-size:1.2rem;margin-bottom:4px;letter-spacing:.04em;text-transform:uppercase;font-weight:700}
+.lesson-header p{color:var(--text2);font-size:.85rem}
+.progress-track{
+  height:4px;background:var(--bg3);border-radius:2px;margin-top:10px;overflow:hidden;
+}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),color-mix(in srgb,var(--accent),#fff 20%));border-radius:2px;transition:width .5s ease;box-shadow:0 0 8px var(--glow-color)}
+.lesson-body{
+  padding:18px;background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);line-height:1.7;font-size:.88rem;color:var(--text2);
+}
+.lesson-body h3{color:var(--text);margin:12px 0 6px;font-size:.95rem;letter-spacing:.04em}
+.lesson-body h3:first-child{margin-top:0}
+.lesson-body strong{color:var(--accent)}
+.lesson-body code{
+  font-family:var(--mono);background:var(--code-bg);padding:2px 6px;border-radius:4px;
+  font-size:.8rem;color:var(--accent2);border:1px solid var(--code-border);
+}
+.lesson-actions{display:flex;gap:8px;margin-top:12px}
+.quiz-panel{
+  padding:16px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+}
+.quiz-panel h4{margin-bottom:10px;font-size:.9rem;letter-spacing:.04em;font-weight:700}
+.quiz-option{
+  display:block;width:100%;text-align:left;padding:10px 14px;margin:4px 0;
+  background:var(--bg3);border:1px solid var(--border);border-radius:999px;
+  color:var(--text);font-size:.8rem;font-family:var(--font);font-weight:500;
+  cursor:pointer;
+}
+[dir="rtl"] .quiz-option{text-align:right}
+.quiz-option:hover{border-color:var(--accent-soft)}
+.quiz-option.correct{border-color:var(--success);background:rgba(34,197,94,.1);box-shadow:0 0 8px rgba(34,197,94,0.15)}
+.quiz-option.wrong{border-color:var(--danger);background:rgba(249,115,115,.1)}
+
+/* ═══════════════════════════════════════════
+   PLAY PAGE (CHALLENGES)
+   ═══════════════════════════════════════════ */
+.play-page{overflow-y:auto;padding:20px}
+.rank-display{
+  text-align:center;padding:20px;background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);margin-bottom:16px;position:relative;overflow:hidden;
+}
+.rank-display::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(circle at 50% 0%,var(--accent-soft),transparent 60%);
+}
+.rank-icon{font-size:2.5rem;position:relative;z-index:1}
+.rank-name{font-size:1.1rem;font-weight:700;margin:6px 0;position:relative;z-index:1;letter-spacing:.06em;text-transform:uppercase}
+.rank-score{color:var(--accent);font-size:1.4rem;font-weight:700;position:relative;z-index:1}
+.badges-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.badge{
+  display:inline-flex;align-items:center;gap:5px;padding:5px 12px;
+  background:var(--bg3);border:1px solid var(--border);border-radius:999px;
+  font-size:.72rem;color:var(--text2);letter-spacing:.04em;font-weight:600;
+}
+.badge.earned{border-color:var(--accent-strong);color:var(--accent);background:var(--accent-soft);box-shadow:0 0 10px var(--accent-soft)}
+.badge .b-icon{font-size:.9rem}
+.challenges-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.challenge-card{
+  padding:18px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
+  cursor:pointer;transition:all var(--transition);position:relative;overflow:hidden;
+}
+.challenge-card:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 0 14px var(--accent-soft)}
+.challenge-card.completed-card{border-color:var(--success)}
+.challenge-card.completed-card::after{
+  content:'✓';position:absolute;top:10px;right:10px;width:24px;height:24px;
+  background:var(--success);color:#fff;border-radius:50%;display:flex;
+  align-items:center;justify-content:center;font-weight:700;font-size:.75rem;
+}
+.challenge-diff{
+  display:inline-flex;padding:3px 9px;border-radius:999px;font-size:.65rem;
+  font-weight:700;text-transform:uppercase;letter-spacing:.08em;
+}
+.challenge-diff.easy{background:rgba(34,197,94,.12);color:#86efac;border:1px solid rgba(34,197,94,0.3)}
+.challenge-diff.medium{background:rgba(245,158,11,.12);color:#fde68a;border:1px solid rgba(245,158,11,0.3)}
+.challenge-diff.hard{background:rgba(249,115,115,.12);color:#fca5a5;border:1px solid rgba(249,115,115,0.3)}
+.challenge-pts{color:var(--accent);font-weight:700;font-size:.8rem;margin-top:6px}
+
+/* ═══════════════════════════════════════════
+   HELP MODAL
+   ═══════════════════════════════════════════ */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(2,6,23,.8);z-index:200;
+  display:none;align-items:center;justify-content:center;
+  backdrop-filter:blur(6px);animation:fadeIn .2s ease;
+}
+.modal-overlay.visible{display:flex}
+.modal{
+  background:var(--bg2);border:1px solid var(--border);border-radius:16px;
+  padding:0;max-width:600px;width:92%;max-height:80vh;overflow:hidden;
+  box-shadow:var(--shadow);display:flex;flex-direction:column;
+}
+.modal-header{
+  padding:14px 18px;border-bottom:1px solid var(--border);display:flex;
+  align-items:center;justify-content:space-between;
+}
+.modal-header h2{font-size:1rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+.modal-tabs{display:flex;gap:2px;padding:8px 16px;border-bottom:1px solid var(--border);overflow-x:auto}
+.modal-tab{
+  padding:6px 12px;border-radius:999px;font-size:.72rem;font-weight:600;
+  background:transparent;color:var(--text2);white-space:nowrap;
+  border:1px solid transparent;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;
+}
+.modal-tab.active{background:var(--accent);color:#052e16;border-color:var(--accent-strong)}
+.modal-body{flex:1;overflow-y:auto;padding:18px}
+.help-section{margin-bottom:16px}
+.help-section h4{color:var(--accent);margin-bottom:8px;font-size:.85rem;letter-spacing:.06em;font-weight:700}
+.help-item{
+  display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);
+  font-size:.8rem;align-items:flex-start;
+}
+.help-item .hi-icon{font-size:1.1rem;flex-shrink:0;margin-top:1px}
+.help-item p{color:var(--text2)}
+.help-item strong{color:var(--text)}
+
+/* ═══════════════════════════════════════════
+   ONBOARDING OVERLAY
+   ═══════════════════════════════════════════ */
+.onboarding-overlay{
+  position:fixed;inset:0;background:rgba(2,6,23,.88);z-index:300;
+  display:flex;align-items:center;justify-content:center;animation:fadeIn .3s ease;
+  backdrop-filter:blur(10px);
+}
+.onboarding-overlay.hidden{display:none}
+.onboarding-card{
+  background:radial-gradient(circle at top left,var(--bg3),var(--bg));
+  border:1px solid var(--accent-strong);border-radius:16px;
+  padding:36px;max-width:460px;width:90%;text-align:center;
+  box-shadow:0 0 40px var(--accent-soft),var(--shadow);
+}
+.onboarding-card .ob-logo{font-size:3rem;margin-bottom:12px}
+.onboarding-card h2{margin-bottom:8px;font-size:1.3rem;letter-spacing:.06em;font-weight:700}
+.onboarding-card p{color:var(--text2);margin-bottom:20px;line-height:1.6;font-size:.9rem}
+.ob-actions{display:flex;gap:10px;justify-content:center}
+
+/* ═══════════════════════════════════════════
+   MISC
+   ═══════════════════════════════════════════ */
+.hidden{display:none !important}
+.bismillah{
+  position:absolute;top:4px;inset-inline:0;display:flex;justify-content:center;
+  font-family:"Amiri",serif;font-size:11px;opacity:0.25;
+  color:rgba(200,230,255,0.9);pointer-events:none;z-index:999;
+}
+@media(max-width:900px){
+  .sidebar,.right-panel{display:none}
+  .lesson-sidebar{width:180px}
+}
+@media(max-width:600px){
+  .hero h1{font-size:1.6rem}
+  .hero-cards{flex-direction:column;align-items:center}
+  .lesson-sidebar{display:none}
+}
+
+/* Selection indicator */
+.selected-info{
+  position:absolute;top:10px;right:10px;z-index:10;
+  background:color-mix(in srgb,var(--bg),transparent 15%);
+  backdrop-filter:blur(12px);padding:8px 14px;border-radius:var(--radius);
+  border:1px solid var(--border);font-size:.75rem;color:var(--text2);
+}
+.selected-info strong{color:var(--accent)}
+
+/* Toast notifications */
+.toast{
+  position:fixed;bottom:20px;right:20px;z-index:250;
+  padding:10px 18px;border-radius:999px;font-size:.8rem;font-weight:600;
+  background:var(--accent);color:#052e16;letter-spacing:.04em;
+  box-shadow:0 8px 24px color-mix(in srgb,var(--accent),transparent 50%);
+  animation:toastIn .4s ease,toastOut .4s ease 2.6s forwards;
+}
+@keyframes toastIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastOut{to{opacity:0;transform:translateY(20px)}}
+</style>
+</head>
+<body>
+<div class="bismillah">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div>
+<div class="app">
+
+<!-- ═══════════ HEADER ═══════════ -->
+<header class="header">
+  <div class="logo">
+    <img src="icon-512.png" alt="Workshop DIY" class="logo-img">
+    <div class="logo-text">
+      <h1 id="hdr-title">Workshop DIY</h1>
+      <span id="hdr-sub">3D Maker Lab</span>
+    </div>
+  </div>
+  <div class="header-controls">
+    <div class="score-badge">⭐ <span id="total-score">0</span></div>
+    <button class="btn-icon" onclick="toggleSound()" id="sound-btn" title="Toggle Sound">🔊</button>
+    <select id="lang-select" onchange="setLang(this.value)">
+      <option value="en">English</option>
+      <option value="fr">Français</option>
+      <option value="ar">العربية</option>
+    </select>
+    <select id="theme-select" onchange="setTheme(this.value)">
+      <option value="terminal">🛡️ Mecha Lab</option>
+      <option value="midnight">🚀 Space Station</option>
+      <option value="sunrise">🏜️ Desert Outpost</option>
+      <option value="synthwave">☢️ Neon Underground</option>
+      <option value="paper">🏴‍☠️ Steampunk Forge</option>
+    </select>
+    <button class="btn-icon" onclick="showHelp()" title="Help">❓</button>
+  </div>
+</header>
+
+<!-- ═══════════ NAV ═══════════ -->
+<nav class="nav" id="main-nav">
+  <button class="nav-btn active" onclick="showPage('home')" data-i18n="home">Home</button>
+  <button class="nav-btn" onclick="showPage('build')" data-i18n="build">Build</button>
+  <button class="nav-btn" onclick="showPage('learn')" data-i18n="learn">Learn</button>
+  <button class="nav-btn" onclick="showPage('play')" data-i18n="play">Play</button>
+</nav>
+
+<!-- ═══════════ HOME PAGE ═══════════ -->
+<div class="page active home-page" id="page-home">
+  <div class="hero">
+    <h1 id="hero-title">3D Maker Lab</h1>
+    <p id="hero-tagline">Build. Wire. Play. — Create amazing 3D projects with electronics!</p>
+    <div class="hero-cards">
+      <div class="mode-card" onclick="showPage('build')">
+        <div class="mc-icon">🔧</div>
+        <h3 data-i18n="build">Build</h3>
+        <p id="home-build-desc">Place shapes & components in 3D</p>
+      </div>
+      <div class="mode-card" onclick="showPage('learn')">
+        <div class="mc-icon">🎓</div>
+        <h3 data-i18n="learn">Learn</h3>
+        <p id="home-learn-desc">12 guided tutorials across 3 levels</p>
+      </div>
+      <div class="mode-card" onclick="showPage('play')">
+        <div class="mc-icon">🎮</div>
+        <h3 data-i18n="play">Play</h3>
+        <p id="home-play-desc">Challenges with points & badges</p>
+      </div>
+    </div>
+  </div>
+  <div class="features-grid" id="features-grid"></div>
+</div>
+
+<!-- ═══════════ BUILD PAGE ═══════════ -->
+<div class="page build-page" id="page-build">
+  <!-- Left Sidebar -->
+  <div class="sidebar" id="build-sidebar">
+    <div class="sidebar-tabs">
+      <button class="sidebar-tab active" onclick="switchSidebarTab('shapes')" data-i18n="shapes">Shapes</button>
+      <button class="sidebar-tab" onclick="switchSidebarTab('components')" data-i18n="components">Components</button>
+    </div>
+    <div class="sidebar-content" id="shapes-panel"></div>
+    <div class="sidebar-content hidden" id="components-panel"></div>
+  </div>
+
+  <!-- 3D Canvas -->
+  <div class="canvas-area" id="canvas-area">
+    <div class="mode-bar">
+      <button class="btn-icon active" onclick="setMode('build')" id="mode-build" title="Build">🔧</button>
+      <button class="btn-icon" onclick="setMode('wire')" id="mode-wire" title="Wire">⚡</button>
+      <button class="btn-icon" onclick="setMode('play')" id="mode-play" title="Play">▶️</button>
+    </div>
+    <div class="selected-info hidden" id="selected-info">
+      <strong id="sel-name">—</strong>
+    </div>
+    <div class="canvas-info" id="canvas-info">
+      <span>🧊 <span id="obj-count">0</span></span>
+      <span>🔗 <span id="wire-count">0</span></span>
+      <span id="mode-label">🔧 Build</span>
+    </div>
+    <div class="console-panel" id="circuit-console">
+      <div class="console-header"><span>⚡ Circuit Log</span><button class="btn-sm" onclick="clearConsole()" style="background:transparent;color:var(--text2);padding:2px 8px;font-size:.65rem">Clear</button></div>
+      <div class="console-body" id="console-body"></div>
+    </div>
+  </div>
+
+  <!-- Right Panel -->
+  <div class="right-panel" id="right-panel">
+    <div class="panel-section">
+      <div class="panel-title">🎨 <span data-i18n="color">Color</span></div>
+      <div class="color-grid" id="color-grid"></div>
+    </div>
+    <div class="panel-section">
+      <div class="panel-title">📐 <span data-i18n="transform">Transform</span></div>
+      <div class="transform-controls">
+        <div class="transform-row"><label>↔</label><input type="range" min="-10" max="10" step="0.5" value="0" id="pos-x" oninput="updateTransform()"></div>
+        <div class="transform-row"><label>↕</label><input type="range" min="0" max="10" step="0.5" value="0.5" id="pos-y" oninput="updateTransform()"></div>
+        <div class="transform-row"><label>↗</label><input type="range" min="-10" max="10" step="0.5" value="0" id="pos-z" oninput="updateTransform()"></div>
+        <div class="transform-row"><label>🔄</label><input type="range" min="0" max="360" step="15" value="0" id="rot-y" oninput="updateTransform()"></div>
+        <div class="transform-row"><label>📏</label><input type="range" min="0.2" max="4" step="0.1" value="1" id="scale-v" oninput="updateTransform()"></div>
+      </div>
+    </div>
+    <div class="panel-section">
+      <div class="panel-title">🛠️ <span data-i18n="actions">Actions</span></div>
+      <div class="action-row">
+        <button class="btn-sm btn-outline" onclick="duplicateSelected()" title="Duplicate">📋</button>
+        <button class="btn-sm btn-danger" onclick="deleteSelected()" title="Delete">🗑️</button>
+        <button class="btn-sm btn-outline" onclick="clearScene()" title="Clear All">💥</button>
+      </div>
+    </div>
+    <div class="panel-section">
+      <div class="panel-title">📂 <span data-i18n="import">Import</span></div>
+      <div class="action-row">
+        <button class="btn-sm btn-outline" onclick="document.getElementById('svg-input').click()">SVG</button>
+        <input type="file" id="svg-input" accept=".svg" style="display:none" onchange="importSVG(event)">
+        <button class="btn-sm btn-outline" onclick="document.getElementById('dxf-input').click()">DXF</button>
+        <input type="file" id="dxf-input" accept=".dxf" style="display:none" onchange="importDXF(event)">
+      </div>
+      <div class="transform-row" style="margin-top:6px">
+        <label style="font-size:.65rem">D</label>
+        <input type="range" min="0.2" max="5" step="0.1" value="1" id="extrude-depth">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ LEARN PAGE ═══════════ -->
+<div class="page learn-page" id="page-learn">
+  <div class="lesson-sidebar" id="lesson-sidebar"></div>
+  <div class="lesson-content" id="lesson-content"></div>
+</div>
+
+<!-- ═══════════ PLAY PAGE ═══════════ -->
+<div class="page play-page" id="page-play">
+  <div class="rank-display" id="rank-display"></div>
+  <div class="badges-row" id="badges-row"></div>
+  <div class="challenges-grid" id="challenges-grid"></div>
+</div>
+
+<!-- ═══════════ HELP MODAL ═══════════ -->
+<div class="modal-overlay" id="help-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>❓ <span data-i18n="help">Help</span></h2>
+      <button class="btn-icon" onclick="closeHelp()">✕</button>
+    </div>
+    <div class="modal-tabs" id="help-tabs"></div>
+    <div class="modal-body" id="help-body"></div>
+  </div>
+</div>
+
+<!-- ═══════════ ONBOARDING ═══════════ -->
+<div class="onboarding-overlay" id="onboarding">
+  <div class="onboarding-card">
+    <div class="ob-logo">🔧</div>
+    <h2 id="ob-title">Welcome to Workshop DIY!</h2>
+    <p id="ob-desc">Build 3D models, wire circuits, and watch them come alive. Ready to start?</p>
+    <div class="ob-actions">
+      <button class="btn" onclick="startTour()"><span data-i18n="startTour">Start Tour</span></button>
+      <button class="btn btn-outline" onclick="skipOnboarding()"><span data-i18n="skip">Skip</span></button>
+    </div>
+  </div>
+</div>
+
+</div><!-- .app -->
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   WORKSHOP DIY — 3D MAKER LAB
+   Full application logic: i18n, themes, Three.js scene,
+   shapes, components, wiring, learn, play, help
+   ═══════════════════════════════════════════════════════════════ */
+
+// ═══════════════════════════════════════════
+// i18n TRANSLATIONS
+// ═══════════════════════════════════════════
+const LANG={
+  en:{
+    home:"Home",build:"Build",learn:"Learn",play:"Play",
+    shapes:"Shapes",components:"Components",color:"Color",transform:"Transform",
+    actions:"Actions",import:"Import",help:"Help",
+    startTour:"Start Tour",skip:"Skip",
+    cube:"Cube",sphere:"Sphere",cylinder:"Cylinder",cone:"Cone",torus:"Torus",star:"Star",
+    led:"LED",rgbLed:"RGB LED",pushBtn:"Push Button",toggleSw:"Toggle Switch",
+    battery:"Battery",buzzer:"Buzzer",motor:"Motor",resistor:"Resistor",
+    wire:"Wire",breadboard:"Breadboard",potentiometer:"Knob",
+    gear:"Gear",wheel:"Wheel",axle:"Axle",bracket:"Bracket",
+    arduino:"Arduino",sensor:"Sensor",fan:"Fan",display7:"7-Segment",
+    buildMode:"Build",wireMode:"Wire",playMode:"Play",
+    heroTitle:"3D Maker Lab",
+    heroTagline:"Build. Wire. Play. — Create amazing 3D projects with electronics!",
+    homeBuildDesc:"Place shapes & components in 3D",
+    homeLearnDesc:"12 guided tutorials across 3 levels",
+    homePlayDesc:"Challenges with points & badges",
+    feat1t:"6 Shapes",feat1d:"Cube, sphere, cylinder, cone, torus & star",
+    feat2t:"Electronics",feat2d:"LEDs, switches, buttons, motors & more",
+    feat3t:"Wire It Up",feat3d:"Connect components and build circuits",
+    feat4t:"Go Live",feat4d:"Hit Play and watch your circuits come alive",
+    feat5t:"Import SVG/DXF",feat5d:"Bring in 2D designs and extrude to 3D",
+    feat6t:"Themes",feat6d:"5 immersive workshop themes to choose from",
+    beginner:"Beginner",builder:"Builder",maker:"Maker Master",
+    circuitLog:"Circuit Log",clear:"Clear",
+    placed:"placed!",deleted:"deleted!",cleared:"Scene cleared!",
+    needsPower:"Needs a battery to work!",circuitOk:"Circuit complete!",
+    controls:"Controls",compGuide:"Components",circuits101:"Circuits 101",
+    shortcuts:"Shortcuts",
+    ctrlRotate:"Left-click + drag to rotate view",
+    ctrlZoom:"Scroll wheel to zoom in/out",
+    ctrlPan:"Right-click + drag to pan the view",
+    ctrlSelect:"Click any object to select it",
+    ctrlPlace:"Click a shape/component in the sidebar to place it",
+  },
+  fr:{
+    home:"Accueil",build:"Construire",learn:"Apprendre",play:"Jouer",
+    shapes:"Formes",components:"Composants",color:"Couleur",transform:"Transformer",
+    actions:"Actions",import:"Importer",help:"Aide",
+    startTour:"Commencer",skip:"Passer",
+    cube:"Cube",sphere:"Sphère",cylinder:"Cylindre",cone:"Cône",torus:"Tore",star:"Étoile",
+    led:"LED",rgbLed:"LED RGB",pushBtn:"Bouton",toggleSw:"Interrupteur",
+    battery:"Pile",buzzer:"Buzzer",motor:"Moteur",resistor:"Résistance",
+    wire:"Fil",breadboard:"Platine",potentiometer:"Potentiomètre",
+    gear:"Engrenage",wheel:"Roue",axle:"Axe",bracket:"Équerre",
+    arduino:"Arduino",sensor:"Capteur",fan:"Ventilateur",display7:"Afficheur 7seg",
+    buildMode:"Construire",wireMode:"Câbler",playMode:"Jouer",
+    heroTitle:"Labo Maker 3D",
+    heroTagline:"Construis. Câble. Joue. — Crée des projets 3D avec de l'électronique !",
+    homeBuildDesc:"Place des formes et composants en 3D",
+    homeLearnDesc:"12 tutoriels guidés en 3 niveaux",
+    homePlayDesc:"Des défis avec points et badges",
+    feat1t:"6 Formes",feat1d:"Cube, sphère, cylindre, cône, tore et étoile",
+    feat2t:"Électronique",feat2d:"LEDs, interrupteurs, boutons, moteurs et plus",
+    feat3t:"Câble-le",feat3d:"Connecte les composants et crée des circuits",
+    feat4t:"En direct",feat4d:"Appuie sur Play et regarde tes circuits s'animer",
+    feat5t:"Import SVG/DXF",feat5d:"Importe des designs 2D et extrude en 3D",
+    feat6t:"Thèmes",feat6d:"5 thèmes immersifs pour ton atelier",
+    beginner:"Débutant",builder:"Constructeur",maker:"Maître Maker",
+    circuitLog:"Journal Circuit",clear:"Effacer",
+    placed:"placé !",deleted:"supprimé !",cleared:"Scène effacée !",
+    needsPower:"Il faut une pile pour fonctionner !",circuitOk:"Circuit complet !",
+    controls:"Contrôles",compGuide:"Composants",circuits101:"Circuits 101",
+    shortcuts:"Raccourcis",
+    ctrlRotate:"Clic gauche + glisser pour tourner la vue",
+    ctrlZoom:"Molette pour zoomer",
+    ctrlPan:"Clic droit + glisser pour déplacer la vue",
+    ctrlSelect:"Clique sur un objet pour le sélectionner",
+    ctrlPlace:"Clique sur une forme dans la barre pour la placer",
+  },
+  ar:{
+    home:"الرئيسية",build:"بناء",learn:"تعلّم",play:"العب",
+    shapes:"أشكال",components:"مكوّنات",color:"اللون",transform:"تحويل",
+    actions:"إجراءات",import:"استيراد",help:"مساعدة",
+    startTour:"ابدأ الجولة",skip:"تخطي",
+    cube:"مكعب",sphere:"كرة",cylinder:"أسطوانة",cone:"مخروط",torus:"حلقة",star:"نجمة",
+    led:"ليد",rgbLed:"ليد RGB",pushBtn:"زر ضغط",toggleSw:"مفتاح",
+    battery:"بطارية",buzzer:"صافرة",motor:"محرك",resistor:"مقاومة",
+    wire:"سلك",breadboard:"لوحة تجارب",potentiometer:"مقبض",
+    gear:"ترس",wheel:"عجلة",axle:"محور",bracket:"زاوية",
+    arduino:"أردوينو",sensor:"حساس",fan:"مروحة",display7:"شاشة 7 أجزاء",
+    buildMode:"بناء",wireMode:"توصيل",playMode:"تشغيل",
+    heroTitle:"مختبر الصانع ثلاثي الأبعاد",
+    heroTagline:"!ابنِ. وصّل. العب. — أنشئ مشاريع ثلاثية الأبعاد مع الإلكترونيات",
+    homeBuildDesc:"ضع الأشكال والمكونات في الفضاء ثلاثي الأبعاد",
+    homeLearnDesc:"12 درسًا تعليميًا عبر 3 مستويات",
+    homePlayDesc:"تحديات مع نقاط وشارات",
+    feat1t:"6 أشكال",feat1d:"مكعب، كرة، أسطوانة، مخروط، حلقة ونجمة",
+    feat2t:"إلكترونيات",feat2d:"ليدات، مفاتيح، أزرار، محركات والمزيد",
+    feat3t:"وصّلها",feat3d:"اربط المكونات وأنشئ دوائر كهربائية",
+    feat4t:"شغّل",feat4d:"اضغط تشغيل وشاهد دوائرك تعمل",
+    feat5t:"استيراد SVG/DXF",feat5d:"أحضر تصاميم ثنائية الأبعاد وقم ببثقها",
+    feat6t:"سمات",feat6d:"5 سمات غامرة لورشتك",
+    beginner:"مبتدئ",builder:"بنّاء",maker:"صانع محترف",
+    circuitLog:"سجل الدائرة",clear:"مسح",
+    placed:"!تم الوضع",deleted:"!تم الحذف",cleared:"!تم مسح المشهد",
+    needsPower:"!يحتاج بطارية ليعمل",circuitOk:"!الدائرة مكتملة",
+    controls:"التحكم",compGuide:"المكونات",circuits101:"أساسيات الدوائر",
+    shortcuts:"اختصارات",
+    ctrlRotate:"انقر واسحب لتدوير المنظر",
+    ctrlZoom:"عجلة الفأرة للتكبير والتصغير",
+    ctrlPan:"انقر يمين واسحب لتحريك المنظر",
+    ctrlSelect:"انقر على أي عنصر لتحديده",
+    ctrlPlace:"انقر على شكل في الشريط الجانبي لوضعه",
+  }
+};
+
+let currentLang='en';
+let currentTheme='terminal';
+let currentPage='home';
+let currentMode='build';
+let soundEnabled=true;
+let totalScore=0;
+let selectedObject=null;
+let sceneObjects=[];
+let wires=[];
+let wireStart=null;
+let completedLessons=new Set();
+let completedChallenges=new Set();
+let currentLesson=0;
+
+function t(key){return LANG[currentLang]?.[key]||LANG.en[key]||key}
+
+function setLang(lang){
+  currentLang=lang;
+  document.documentElement.lang=lang;
+  document.documentElement.dir=lang==='ar'?'rtl':'ltr';
+  if(lang==='ar'){
+    document.body.style.fontFamily='"Noto Kufi Arabic","Amiri",var(--font)';
+  } else {
+    document.body.style.fontFamily='';
+  }
+  updateAllText();
+}
+
+function setTheme(theme){
+  currentTheme=theme;
+  if(theme==='terminal') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme',theme);
+  updateSceneTheme();
+}
+
+function updateAllText(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key=el.getAttribute('data-i18n');
+    if(LANG[currentLang]?.[key]) el.textContent=t(key);
+  });
+  const heroTitle=document.getElementById('hero-title');
+  const heroTag=document.getElementById('hero-tagline');
+  if(heroTitle) heroTitle.textContent=t('heroTitle');
+  if(heroTag) heroTag.textContent=t('heroTagline');
+  document.getElementById('home-build-desc').textContent=t('homeBuildDesc');
+  document.getElementById('home-learn-desc').textContent=t('homeLearnDesc');
+  document.getElementById('home-play-desc').textContent=t('homePlayDesc');
+  document.getElementById('hdr-sub').textContent=t('heroTitle');
+  renderFeatures();
+  renderLearnSidebar();
+  renderPlayPage();
+}
+
+// ═══════════════════════════════════════════
+// PAGE NAVIGATION
+// ═══════════════════════════════════════════
+function showPage(page){
+  currentPage=page;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach((b,i)=>{
+    b.classList.toggle('active',['home','build','learn','play'][i]===page);
+  });
+  if(page==='build') handleResize();
+}
+
+// ═══════════════════════════════════════════
+// SOUND SYSTEM
+// ═══════════════════════════════════════════
+const audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+function playSound(type){
+  if(!soundEnabled)return;
+  try{
+    const osc=audioCtx.createOscillator();
+    const gain=audioCtx.createGain();
+    osc.connect(gain);gain.connect(audioCtx.destination);
+    gain.gain.setValueAtTime(0.08,audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.3);
+    const freqs={place:520,delete:280,snap:660,click:440,success:880,wire:600,error:200,buzz:120};
+    osc.frequency.setValueAtTime(freqs[type]||440,audioCtx.currentTime);
+    osc.type=type==='buzz'?'sawtooth':'sine';
+    osc.start();osc.stop(audioCtx.currentTime+0.3);
+  }catch(e){}
+}
+function toggleSound(){
+  soundEnabled=!soundEnabled;
+  document.getElementById('sound-btn').textContent=soundEnabled?'🔊':'🔇';
+}
+
+// ═══════════════════════════════════════════
+// THREE.JS SCENE
+// ═══════════════════════════════════════════
+let scene,camera,renderer,raycaster,mouse,gridHelper;
+let isMouseDown=false,isRightDown=false,lastMouse={x:0,y:0};
+let cameraAngle={theta:Math.PI/4,phi:Math.PI/4,radius:15};
+let cameraTarget=new THREE.Vector3(0,0,0);
+
+function initScene(){
+  const container=document.getElementById('canvas-area');
+  scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x020617);
+
+  camera=new THREE.PerspectiveCamera(50,container.clientWidth/container.clientHeight,0.1,1000);
+  updateCameraPosition();
+
+  renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
+  renderer.setSize(container.clientWidth,container.clientHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.shadowMap.enabled=true;
+  renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  container.appendChild(renderer.domElement);
+
+  // Lighting
+  const ambientLight=new THREE.AmbientLight(0x404060,0.6);
+  scene.add(ambientLight);
+  const dirLight=new THREE.DirectionalLight(0xffffff,0.8);
+  dirLight.position.set(10,15,10);
+  dirLight.castShadow=true;
+  dirLight.shadow.mapSize.set(1024,1024);
+  scene.add(dirLight);
+  const fillLight=new THREE.DirectionalLight(0x4488ff,0.3);
+  fillLight.position.set(-8,5,-5);
+  scene.add(fillLight);
+
+  // Floor
+  const floorGeo=new THREE.PlaneGeometry(40,40);
+  const floorMat=new THREE.MeshStandardMaterial({color:0x1a2332,roughness:0.9,metalness:0.1});
+  const floor=new THREE.Mesh(floorGeo,floorMat);
+  floor.rotation.x=-Math.PI/2;
+  floor.receiveShadow=true;
+  floor.userData.isFloor=true;
+  scene.add(floor);
+
+  // Grid
+  gridHelper=new THREE.GridHelper(40,40,0x22c55e,0x0f2a1a);
+  gridHelper.material.opacity=0.3;
+  gridHelper.material.transparent=true;
+  scene.add(gridHelper);
+
+  raycaster=new THREE.Raycaster();
+  mouse=new THREE.Vector2();
+
+  // Events
+  renderer.domElement.addEventListener('mousedown',onMouseDown);
+  renderer.domElement.addEventListener('mousemove',onMouseMove);
+  renderer.domElement.addEventListener('mouseup',onMouseUp);
+  renderer.domElement.addEventListener('wheel',onWheel);
+  renderer.domElement.addEventListener('contextmenu',e=>e.preventDefault());
+  renderer.domElement.addEventListener('touchstart',onTouchStart,{passive:false});
+  renderer.domElement.addEventListener('touchmove',onTouchMove,{passive:false});
+  renderer.domElement.addEventListener('touchend',onTouchEnd);
+  window.addEventListener('resize',handleResize);
+
+  animate();
+}
+
+function updateCameraPosition(){
+  const {theta,phi,radius}=cameraAngle;
+  camera.position.x=cameraTarget.x+radius*Math.sin(phi)*Math.cos(theta);
+  camera.position.y=cameraTarget.y+radius*Math.cos(phi);
+  camera.position.z=cameraTarget.z+radius*Math.sin(phi)*Math.sin(theta);
+  camera.lookAt(cameraTarget);
+}
+
+function handleResize(){
+  const container=document.getElementById('canvas-area');
+  if(!container||!renderer)return;
+  const w=container.clientWidth,h=container.clientHeight;
+  camera.aspect=w/h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w,h);
+}
+
+function animate(){
+  requestAnimationFrame(animate);
+  // Animate interactive components
+  sceneObjects.forEach(obj=>{
+    if(obj.userData.type==='fan'&&obj.userData.powered){
+      obj.rotation.y+=0.15;
+    }
+    if(obj.userData.type==='motor'&&obj.userData.powered){
+      obj.children.forEach(c=>{if(c.userData.isRotor) c.rotation.y+=0.1;});
+    }
+  });
+  renderer.render(scene,camera);
+}
+
+// ─── MOUSE / TOUCH CONTROLS ───
+let touchStartDist=0;
+function onMouseDown(e){
+  if(e.button===0){isMouseDown=true;lastMouse={x:e.clientX,y:e.clientY};}
+  if(e.button===2){isRightDown=true;lastMouse={x:e.clientX,y:e.clientY};}
+}
+function onMouseMove(e){
+  if(isMouseDown&&!isRightDown){
+    const dx=e.clientX-lastMouse.x;
+    const dy=e.clientY-lastMouse.y;
+    cameraAngle.theta-=dx*0.008;
+    cameraAngle.phi=Math.max(0.1,Math.min(Math.PI/2-0.01,cameraAngle.phi-dy*0.008));
+    updateCameraPosition();
+    lastMouse={x:e.clientX,y:e.clientY};
+  }
+  if(isRightDown){
+    const dx=e.clientX-lastMouse.x;
+    const dy=e.clientY-lastMouse.y;
+    const right=new THREE.Vector3();
+    camera.getWorldDirection(right);
+    const up=new THREE.Vector3(0,1,0);
+    right.cross(up).normalize();
+    cameraTarget.add(right.multiplyScalar(dx*0.02));
+    cameraTarget.y+=dy*0.02;
+    updateCameraPosition();
+    lastMouse={x:e.clientX,y:e.clientY};
+  }
+}
+function onMouseUp(e){
+  if(e.button===0){
+    const dx=Math.abs(e.clientX-lastMouse.x);
+    const dy=Math.abs(e.clientY-lastMouse.y);
+    if(dx<3&&dy<3) onSceneClick(e);
+    isMouseDown=false;
+  }
+  if(e.button===2) isRightDown=false;
+}
+function onWheel(e){
+  cameraAngle.radius=Math.max(3,Math.min(40,cameraAngle.radius+e.deltaY*0.01));
+  updateCameraPosition();
+}
+function onTouchStart(e){
+  e.preventDefault();
+  if(e.touches.length===1){
+    isMouseDown=true;
+    lastMouse={x:e.touches[0].clientX,y:e.touches[0].clientY};
+  }
+  if(e.touches.length===2){
+    touchStartDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+  }
+}
+function onTouchMove(e){
+  e.preventDefault();
+  if(e.touches.length===1&&isMouseDown){
+    const dx=e.touches[0].clientX-lastMouse.x;
+    const dy=e.touches[0].clientY-lastMouse.y;
+    cameraAngle.theta-=dx*0.008;
+    cameraAngle.phi=Math.max(0.1,Math.min(Math.PI/2-0.01,cameraAngle.phi-dy*0.008));
+    updateCameraPosition();
+    lastMouse={x:e.touches[0].clientX,y:e.touches[0].clientY};
+  }
+  if(e.touches.length===2){
+    const dist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    cameraAngle.radius=Math.max(3,Math.min(40,cameraAngle.radius-(dist-touchStartDist)*0.03));
+    updateCameraPosition();
+    touchStartDist=dist;
+  }
+}
+function onTouchEnd(){isMouseDown=false}
+
+// ─── SCENE CLICK ───
+function onSceneClick(e){
+  const rect=renderer.domElement.getBoundingClientRect();
+  mouse.x=((e.clientX-rect.left)/rect.width)*2-1;
+  mouse.y=-((e.clientY-rect.top)/rect.height)*2+1;
+  raycaster.setFromCamera(mouse,camera);
+
+  if(currentMode==='play'){
+    const hits=raycaster.intersectObjects(sceneObjects,true);
+    if(hits.length>0){
+      let obj=hits[0].object;
+      while(obj.parent&&!obj.userData.type) obj=obj.parent;
+      if(obj.userData.interactive) toggleComponent(obj);
+    }
+    return;
+  }
+
+  if(currentMode==='wire'){
+    const hits=raycaster.intersectObjects(sceneObjects,true);
+    if(hits.length>0){
+      let obj=hits[0].object;
+      while(obj.parent&&!obj.userData.type) obj=obj.parent;
+      if(obj.userData.type){
+        if(!wireStart){
+          wireStart=obj;
+          consoleLog('Wire from: '+obj.userData.label,'info');
+        } else {
+          createWire(wireStart,obj);
+          wireStart=null;
+        }
+      }
+    }
+    return;
+  }
+
+  // Build mode — select
+  const hits=raycaster.intersectObjects(sceneObjects,true);
+  if(hits.length>0){
+    let obj=hits[0].object;
+    while(obj.parent&&!obj.userData.type) obj=obj.parent;
+    selectObject(obj);
+  } else {
+    deselectObject();
+  }
+}
+
+// ═══════════════════════════════════════════
+// OBJECT MANAGEMENT
+// ═══════════════════════════════════════════
+const COLORS=['#ef4444','#f97316','#f59e0b','#eab308','#84cc16','#22c55e','#14b8a6','#06b6d4','#3b82f6','#6366f1','#a855f7','#ec4899','#f43f5e','#8b5cf6','#0ea5e9','#ffffff'];
+let activeColor='#22c55e';
+
+function createShape(type){
+  let geo,label;
+  switch(type){
+    case'cube':geo=new THREE.BoxGeometry(1,1,1);label=t('cube');break;
+    case'sphere':geo=new THREE.SphereGeometry(0.5,24,24);label=t('sphere');break;
+    case'cylinder':geo=new THREE.CylinderGeometry(0.4,0.4,1,24);label=t('cylinder');break;
+    case'cone':geo=new THREE.ConeGeometry(0.5,1,24);label=t('cone');break;
+    case'torus':geo=new THREE.TorusGeometry(0.4,0.15,12,32);label=t('torus');break;
+    case'star':geo=createStarGeometry();label=t('star');break;
+    default:geo=new THREE.BoxGeometry(1,1,1);label=type;
+  }
+  const mat=new THREE.MeshStandardMaterial({color:activeColor,roughness:0.4,metalness:0.3});
+  const mesh=new THREE.Mesh(geo,mat);
+  mesh.position.set((Math.random()-0.5)*4,0.5,(Math.random()-0.5)*4);
+  mesh.castShadow=true;
+  mesh.userData={type:type,label:label,category:'shape'};
+  scene.add(mesh);
+  sceneObjects.push(mesh);
+  selectObject(mesh);
+  updateObjCount();
+  playSound('place');
+  showToast(label+' '+t('placed'));
+}
+
+function createStarGeometry(){
+  const shape=new THREE.Shape();
+  const outerR=0.5,innerR=0.2,points=5;
+  for(let i=0;i<points*2;i++){
+    const angle=i*Math.PI/points-Math.PI/2;
+    const r=i%2===0?outerR:innerR;
+    if(i===0)shape.moveTo(Math.cos(angle)*r,Math.sin(angle)*r);
+    else shape.lineTo(Math.cos(angle)*r,Math.sin(angle)*r);
+  }
+  shape.closePath();
+  return new THREE.ExtrudeGeometry(shape,{depth:0.3,bevelEnabled:true,bevelThickness:0.05,bevelSize:0.05,bevelSegments:3});
+}
+
+// ─── ELECTRONIC COMPONENTS ───
+function createComponent(type){
+  let group=new THREE.Group();
+  let label=t(type);
+  let interactive=false;
+  let hasInput=false,hasOutput=false;
+
+  switch(type){
+    case'led':{
+      const base=new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.18,0.1,16),new THREE.MeshStandardMaterial({color:0x333333,metalness:0.8}));
+      const dome=new THREE.Mesh(new THREE.SphereGeometry(0.15,16,12,0,Math.PI*2,0,Math.PI/2),new THREE.MeshStandardMaterial({color:activeColor,emissive:0x000000,transparent:true,opacity:0.9}));
+      dome.position.y=0.05;
+      const leg1=new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,0.4,6),new THREE.MeshStandardMaterial({color:0x888888,metalness:0.9}));
+      leg1.position.set(-0.08,-0.25,0);
+      const leg2=leg1.clone();leg2.position.x=0.08;
+      group.add(base,dome,leg1,leg2);
+      dome.userData.isDome=true;
+      interactive=true;hasInput=true;
+      group.position.y=0.5;
+      break;
+    }
+    case'rgbLed':{
+      const base=new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.21,0.12,16),new THREE.MeshStandardMaterial({color:0x333333,metalness:0.8}));
+      const dome=new THREE.Mesh(new THREE.SphereGeometry(0.18,16,12,0,Math.PI*2,0,Math.PI/2),new THREE.MeshStandardMaterial({color:0xffffff,emissive:0x000000,transparent:true,opacity:0.85}));
+      dome.position.y=0.06;
+      dome.userData.isDome=true;
+      group.add(base,dome);
+      interactive=true;hasInput=true;
+      group.position.y=0.5;
+      break;
+    }
+    case'pushBtn':{
+      const base=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.2,0.5),new THREE.MeshStandardMaterial({color:0x222222,roughness:0.6}));
+      const btn=new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.15,0.12,16),new THREE.MeshStandardMaterial({color:0xef4444,roughness:0.3}));
+      btn.position.y=0.16;btn.userData.isButton=true;
+      group.add(base,btn);
+      interactive=true;hasOutput=true;
+      group.position.y=0.3;
+      break;
+    }
+    case'toggleSw':{
+      const base=new THREE.Mesh(new THREE.BoxGeometry(0.6,0.15,0.3),new THREE.MeshStandardMaterial({color:0x1a1a2e,roughness:0.5}));
+      const lever=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,0.3,8),new THREE.MeshStandardMaterial({color:0xcccccc,metalness:0.9}));
+      lever.position.set(-0.15,0.2,0);lever.rotation.z=Math.PI/6;
+      lever.userData.isLever=true;
+      const indicator=new THREE.Mesh(new THREE.SphereGeometry(0.04,8,8),new THREE.MeshStandardMaterial({color:0x666666,emissive:0x000000}));
+      indicator.position.set(0.2,0.1,0);indicator.userData.isIndicator=true;
+      group.add(base,lever,indicator);
+      interactive=true;hasOutput=true;
+      group.position.y=0.3;
+      break;
+    }
+    case'battery':{
+      const body=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,0.7,16),new THREE.MeshStandardMaterial({color:0x1e40af,roughness:0.4}));
+      const cap=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,0.08,8),new THREE.MeshStandardMaterial({color:0xcccccc,metalness:0.9}));
+      cap.position.y=0.39;
+      const label_m=new THREE.Mesh(new THREE.CylinderGeometry(0.21,0.21,0.3,16),new THREE.MeshStandardMaterial({color:0xfbbf24,roughness:0.5}));
+      label_m.position.y=0.05;
+      group.add(body,cap,label_m);
+      hasOutput=true;
+      group.position.y=0.5;
+      break;
+    }
+    case'buzzer':{
+      const body=new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.25,0.2,16),new THREE.MeshStandardMaterial({color:0x111111,roughness:0.4}));
+      const top=new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.2,0.08,16),new THREE.MeshStandardMaterial({color:0x333333,roughness:0.6}));
+      top.position.y=0.14;
+      group.add(body,top);
+      interactive=true;hasInput=true;
+      group.position.y=0.3;
+      break;
+    }
+    case'motor':{
+      const body=new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.25,0.5,16),new THREE.MeshStandardMaterial({color:0x555555,metalness:0.7}));
+      const shaft=new THREE.Mesh(new THREE.CylinderGeometry(0.04,0.04,0.3,8),new THREE.MeshStandardMaterial({color:0xcccccc,metalness:0.9}));
+      shaft.position.y=0.4;shaft.userData.isRotor=true;
+      group.add(body,shaft);
+      interactive=true;hasInput=true;
+      group.position.y=0.5;
+      break;
+    }
+    case'resistor':{
+      const body=new THREE.Mesh(new THREE.CylinderGeometry(0.1,0.1,0.5,8),new THREE.MeshStandardMaterial({color:0xd2b48c,roughness:0.7}));
+      body.rotation.z=Math.PI/2;
+      const band1=new THREE.Mesh(new THREE.CylinderGeometry(0.11,0.11,0.05,8),new THREE.MeshStandardMaterial({color:0xa855f7}));
+      band1.rotation.z=Math.PI/2;band1.position.x=-0.1;
+      const band2=band1.clone();band2.material=new THREE.MeshStandardMaterial({color:0x22c55e});band2.position.x=0;
+      const band3=band1.clone();band3.material=new THREE.MeshStandardMaterial({color:0xf59e0b});band3.position.x=0.1;
+      group.add(body,band1,band2,band3);
+      group.position.y=0.3;
+      break;
+    }
+    case'arduino':{
+      const board=new THREE.Mesh(new THREE.BoxGeometry(1.2,0.1,0.8),new THREE.MeshStandardMaterial({color:0x006d5b,roughness:0.5}));
+      const usb=new THREE.Mesh(new THREE.BoxGeometry(0.2,0.12,0.15),new THREE.MeshStandardMaterial({color:0xcccccc,metalness:0.9}));
+      usb.position.set(-0.6,0.05,0);
+      const chip=new THREE.Mesh(new THREE.BoxGeometry(0.3,0.06,0.3),new THREE.MeshStandardMaterial({color:0x111111}));
+      chip.position.y=0.08;
+      const pins=new THREE.Mesh(new THREE.BoxGeometry(1,0.04,0.05),new THREE.MeshStandardMaterial({color:0xfbbf24,metalness:0.8}));
+      pins.position.set(0,0.02,0.35);
+      const pins2=pins.clone();pins2.position.z=-0.35;
+      group.add(board,usb,chip,pins,pins2);
+      hasInput=true;hasOutput=true;
+      group.position.y=0.3;
+      break;
+    }
+    case'sensor':{
+      const body=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.15,0.3),new THREE.MeshStandardMaterial({color:0x0f172a}));
+      const eye=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.1,0.06,12),new THREE.MeshStandardMaterial({color:0x3b82f6,emissive:0x1a3a6a}));
+      eye.rotation.x=Math.PI/2;eye.position.z=0.18;
+      group.add(body,eye);
+      hasOutput=true;
+      group.position.y=0.3;
+      break;
+    }
+    case'fan':{
+      const hub=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,0.1,12),new THREE.MeshStandardMaterial({color:0x444444,metalness:0.7}));
+      for(let i=0;i<4;i++){
+        const blade=new THREE.Mesh(new THREE.BoxGeometry(0.4,0.02,0.12),new THREE.MeshStandardMaterial({color:0x88aacc,transparent:true,opacity:0.8}));
+        blade.rotation.y=i*Math.PI/2;
+        blade.position.set(Math.cos(i*Math.PI/2)*0.2,0,Math.sin(i*Math.PI/2)*0.2);
+        group.add(blade);
+      }
+      group.add(hub);
+      interactive=true;hasInput=true;
+      group.position.y=0.5;
+      break;
+    }
+    case'potentiometer':{
+      const base=new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.25,0.15,16),new THREE.MeshStandardMaterial({color:0x2a2a3e,roughness:0.5}));
+      const knob=new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.15,0.1,16),new THREE.MeshStandardMaterial({color:0xcccccc,metalness:0.8}));
+      knob.position.y=0.12;
+      const marker=new THREE.Mesh(new THREE.BoxGeometry(0.02,0.02,0.12),new THREE.MeshStandardMaterial({color:0xef4444}));
+      marker.position.y=0.18;
+      group.add(base,knob,marker);
+      interactive=true;hasOutput=true;
+      group.position.y=0.3;
+      break;
+    }
+    case'gear':{
+      const shape=new THREE.Shape();
+      const teeth=12,outerR=0.4,innerR=0.3;
+      for(let i=0;i<teeth*2;i++){
+        const angle=i*Math.PI/teeth;
+        const r=i%2===0?outerR:innerR;
+        if(i===0)shape.moveTo(Math.cos(angle)*r,Math.sin(angle)*r);
+        else shape.lineTo(Math.cos(angle)*r,Math.sin(angle)*r);
+      }
+      shape.closePath();
+      const hole=new THREE.Path();
+      hole.absarc(0,0,0.08,0,Math.PI*2);
+      shape.holes.push(hole);
+      const geo=new THREE.ExtrudeGeometry(shape,{depth:0.15,bevelEnabled:false});
+      const mesh=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:0x888888,metalness:0.8,roughness:0.3}));
+      mesh.rotation.x=-Math.PI/2;
+      group.add(mesh);
+      group.position.y=0.5;
+      break;
+    }
+    case'wheel':{
+      const tire=new THREE.Mesh(new THREE.TorusGeometry(0.3,0.1,8,24),new THREE.MeshStandardMaterial({color:0x222222,roughness:0.9}));
+      const hub_w=new THREE.Mesh(new THREE.CylinderGeometry(0.15,0.15,0.08,12),new THREE.MeshStandardMaterial({color:0xcccccc,metalness:0.8}));
+      hub_w.rotation.x=Math.PI/2;
+      group.add(tire,hub_w);
+      group.position.y=0.5;
+      break;
+    }
+    case'breadboard':{
+      const board=new THREE.Mesh(new THREE.BoxGeometry(1.5,0.08,0.6),new THREE.MeshStandardMaterial({color:0xfafafa,roughness:0.7}));
+      const rail1=new THREE.Mesh(new THREE.BoxGeometry(1.4,0.02,0.05),new THREE.MeshStandardMaterial({color:0xef4444}));
+      rail1.position.set(0,0.05,0.22);
+      const rail2=rail1.clone();rail2.material=new THREE.MeshStandardMaterial({color:0x3b82f6});
+      rail2.position.z=-0.22;
+      group.add(board,rail1,rail2);
+      group.position.y=0.2;
+      break;
+    }
+    case'display7':{
+      const body=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.6,0.15),new THREE.MeshStandardMaterial({color:0x111111}));
+      const screen=new THREE.Mesh(new THREE.BoxGeometry(0.35,0.45,0.01),new THREE.MeshStandardMaterial({color:0x001100,emissive:0x003300}));
+      screen.position.z=0.08;screen.userData.isScreen=true;
+      group.add(body,screen);
+      interactive=true;hasInput=true;
+      group.position.y=0.5;
+      break;
+    }
+    default:{
+      const box=new THREE.Mesh(new THREE.BoxGeometry(0.5,0.5,0.5),new THREE.MeshStandardMaterial({color:0x666666}));
+      group.add(box);
+      group.position.y=0.5;
+    }
+  }
+
+  group.position.x=(Math.random()-0.5)*4;
+  group.position.z=(Math.random()-0.5)*4;
+  group.userData={type:type,label:label,category:'component',interactive:interactive,hasInput:hasInput,hasOutput:hasOutput,powered:false,on:false,connections:[]};
+  group.castShadow=true;
+  scene.add(group);
+  sceneObjects.push(group);
+  selectObject(group);
+  updateObjCount();
+  playSound('place');
+  showToast(label+' '+t('placed'));
+}
+
+// ─── WIRING ───
+function createWire(from,to){
+  const start=from.position.clone();start.y+=0.3;
+  const end=to.position.clone();end.y+=0.3;
+  const mid=start.clone().add(end).multiplyScalar(0.5);
+  mid.y+=1.5;
+  const curve=new THREE.QuadraticBezierCurve3(start,mid,end);
+  const geo=new THREE.TubeGeometry(curve,20,0.02,6,false);
+  const mat=new THREE.MeshStandardMaterial({color:0xef4444,roughness:0.3,metalness:0.5});
+  const wire=new THREE.Mesh(geo,mat);
+  wire.userData={type:'wire',from:from,to:to};
+  scene.add(wire);
+  wires.push(wire);
+  from.userData.connections.push(to);
+  to.userData.connections.push(from);
+  updateWireCount();
+  playSound('wire');
+  consoleLog('Wire: '+from.userData.label+' → '+to.userData.label,'success');
+  validateCircuit();
+}
+
+function validateCircuit(){
+  // Simple: check if any output device has a path to a battery
+  const batteries=sceneObjects.filter(o=>o.userData.type==='battery');
+  const outputs=sceneObjects.filter(o=>o.userData.hasInput&&o.userData.interactive);
+  outputs.forEach(out=>{
+    const visited=new Set();
+    const hasPower=(obj)=>{
+      if(visited.has(obj))return false;
+      visited.add(obj);
+      if(obj.userData.type==='battery')return true;
+      return(obj.userData.connections||[]).some(c=>hasPower(c));
+    };
+    if(hasPower(out)){
+      out.userData.powered=true;
+      consoleLog('✓ '+out.userData.label+': '+t('circuitOk'),'success');
+    }
+  });
+}
+
+function toggleComponent(obj){
+  if(!obj.userData.interactive)return;
+  playSound('click');
+  const type=obj.userData.type;
+
+  if(type==='pushBtn'||type==='toggleSw'){
+    obj.userData.on=!obj.userData.on;
+    // Toggle visual
+    obj.children.forEach(c=>{
+      if(c.userData.isLever){
+        c.rotation.z=obj.userData.on?-Math.PI/6:Math.PI/6;
+        c.position.x=obj.userData.on?0.15:-0.15;
+      }
+      if(c.userData.isIndicator){
+        c.material.color.set(obj.userData.on?0x22c55e:0x666666);
+        c.material.emissive.set(obj.userData.on?0x22c55e:0x000000);
+      }
+      if(c.userData.isButton){
+        c.position.y=obj.userData.on?0.1:0.16;
+      }
+    });
+    // Propagate to connected components
+    propagatePower(obj,obj.userData.on);
+  }
+  if(type==='led'||type==='rgbLed'){
+    obj.userData.on=!obj.userData.on;
+    obj.children.forEach(c=>{
+      if(c.userData.isDome){
+        const col=new THREE.Color(activeColor);
+        c.material.emissive.set(obj.userData.on?col:new THREE.Color(0));
+        c.material.emissiveIntensity=obj.userData.on?0.8:0;
+      }
+    });
+    // Add/remove point light
+    if(obj.userData.on){
+      if(!obj.userData.light){
+        const light=new THREE.PointLight(new THREE.Color(activeColor),1,5);
+        light.position.y=0.3;
+        obj.add(light);
+        obj.userData.light=light;
+      }
+    } else {
+      if(obj.userData.light){obj.remove(obj.userData.light);obj.userData.light=null;}
+    }
+  }
+  if(type==='buzzer'){
+    playSound('buzz');
+  }
+  if(type==='fan'){
+    obj.userData.powered=!obj.userData.powered;
+  }
+  if(type==='motor'){
+    obj.userData.powered=!obj.userData.powered;
+  }
+  if(type==='display7'){
+    obj.userData.displayNum=(obj.userData.displayNum||0)+1;
+    if(obj.userData.displayNum>9) obj.userData.displayNum=0;
+  }
+}
+
+function propagatePower(source,on){
+  (source.userData.connections||[]).forEach(connected=>{
+    if(connected.userData.interactive){
+      if(connected.userData.type==='led'||connected.userData.type==='rgbLed'){
+        connected.userData.on=on;
+        connected.children.forEach(c=>{
+          if(c.userData.isDome){
+            c.material.emissive.set(on?new THREE.Color(activeColor):new THREE.Color(0));
+            c.material.emissiveIntensity=on?0.8:0;
+          }
+        });
+        if(on&&!connected.userData.light){
+          const light=new THREE.PointLight(new THREE.Color(activeColor),1,5);
+          light.position.y=0.3;connected.add(light);connected.userData.light=light;
+        }
+        if(!on&&connected.userData.light){
+          connected.remove(connected.userData.light);connected.userData.light=null;
+        }
+      }
+      if(connected.userData.type==='buzzer'&&on) playSound('buzz');
+      if(connected.userData.type==='fan') connected.userData.powered=on;
+      if(connected.userData.type==='motor') connected.userData.powered=on;
+    }
+  });
+}
+
+// ─── SELECTION ───
+function selectObject(obj){
+  deselectObject();
+  selectedObject=obj;
+  // Outline effect
+  if(obj.material){
+    obj.userData.origEmissive=obj.material.emissive?.getHex();
+    obj.material.emissive?.set(0x224422);
+  }
+  const info=document.getElementById('selected-info');
+  info.classList.remove('hidden');
+  document.getElementById('sel-name').textContent=obj.userData.label||obj.userData.type;
+  // Sync sliders
+  document.getElementById('pos-x').value=obj.position.x;
+  document.getElementById('pos-y').value=obj.position.y;
+  document.getElementById('pos-z').value=obj.position.z;
+  document.getElementById('rot-y').value=THREE.MathUtils.radToDeg(obj.rotation.y);
+  document.getElementById('scale-v').value=obj.scale.x;
+}
+function deselectObject(){
+  if(selectedObject){
+    if(selectedObject.material&&selectedObject.userData.origEmissive!==undefined){
+      selectedObject.material.emissive?.set(selectedObject.userData.origEmissive);
+    }
+    selectedObject=null;
+  }
+  document.getElementById('selected-info').classList.add('hidden');
+}
+function updateTransform(){
+  if(!selectedObject)return;
+  selectedObject.position.x=parseFloat(document.getElementById('pos-x').value);
+  selectedObject.position.y=parseFloat(document.getElementById('pos-y').value);
+  selectedObject.position.z=parseFloat(document.getElementById('pos-z').value);
+  selectedObject.rotation.y=THREE.MathUtils.degToRad(parseFloat(document.getElementById('rot-y').value));
+  const s=parseFloat(document.getElementById('scale-v').value);
+  selectedObject.scale.set(s,s,s);
+}
+function duplicateSelected(){
+  if(!selectedObject)return;
+  const ud=selectedObject.userData;
+  if(ud.category==='shape') createShape(ud.type);
+  else createComponent(ud.type);
+  playSound('snap');
+}
+function deleteSelected(){
+  if(!selectedObject)return;
+  scene.remove(selectedObject);
+  sceneObjects=sceneObjects.filter(o=>o!==selectedObject);
+  // Remove connected wires
+  wires=wires.filter(w=>{
+    if(w.userData.from===selectedObject||w.userData.to===selectedObject){
+      scene.remove(w);return false;
+    }
+    return true;
+  });
+  const label=selectedObject.userData.label;
+  deselectObject();
+  updateObjCount();updateWireCount();
+  playSound('delete');
+  showToast(label+' '+t('deleted'));
+}
+function clearScene(){
+  sceneObjects.forEach(o=>scene.remove(o));
+  wires.forEach(w=>scene.remove(w));
+  sceneObjects=[];wires=[];
+  deselectObject();updateObjCount();updateWireCount();
+  playSound('delete');
+  showToast(t('cleared'));
+}
+
+function updateObjCount(){document.getElementById('obj-count').textContent=sceneObjects.length}
+function updateWireCount(){document.getElementById('wire-count').textContent=wires.length}
+
+// ─── MODE SWITCHING ───
+function setMode(mode){
+  currentMode=mode;
+  document.querySelectorAll('.mode-bar .btn-icon').forEach(b=>b.classList.remove('active'));
+  document.getElementById('mode-'+mode).classList.add('active');
+  const labels={build:'🔧 '+t('buildMode'),wire:'⚡ '+t('wireMode'),play:'▶️ '+t('playMode')};
+  document.getElementById('mode-label').textContent=labels[mode];
+  document.getElementById('circuit-console').classList.toggle('visible',mode==='wire');
+  wireStart=null;
+  if(mode==='play') consoleLog('▶️ Play mode — click components to interact!','info');
+}
+
+// ─── SCENE THEME ───
+function updateSceneTheme(){
+  if(!scene)return;
+  const themes={
+    terminal:{bg:0x020617,grid:0x22c55e,gridSub:0x0f2a1a,floor:0x1a2332},
+    midnight:{bg:0x0f0e2a,grid:0xfbbf24,gridSub:0x1a1844,floor:0x1a1844},
+    sunrise:{bg:0xfef7ed,grid:0xea580c,gridSub:0xffedd5,floor:0xe8dcc8},
+    synthwave:{bg:0x1a0533,grid:0xf472b6,gridSub:0x2d0a5e,floor:0x1a0533},
+    paper:{bg:0xf5f1eb,grid:0xb45309,gridSub:0xe2ddd5,floor:0xd4cec4},
+  };
+  const th=themes[currentTheme]||themes.terminal;
+  scene.background=new THREE.Color(th.bg);
+  scene.children.forEach(c=>{
+    if(c.userData.isFloor) c.material.color.set(th.floor);
+  });
+  if(gridHelper){
+    scene.remove(gridHelper);
+    gridHelper=new THREE.GridHelper(40,40,th.grid,th.gridSub);
+    gridHelper.material.opacity=0.3;
+    gridHelper.material.transparent=true;
+    scene.add(gridHelper);
+  }
+}
+
+// ─── CONSOLE ───
+function consoleLog(msg,cls='info'){
+  const el=document.getElementById('console-body');
+  el.innerHTML+=`<div class="console-line ${cls}">${msg}</div>`;
+  el.scrollTop=el.scrollHeight;
+}
+function clearConsole(){document.getElementById('console-body').innerHTML=''}
+
+// ─── IMPORT SVG ───
+function importSVG(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      const parser=new DOMParser();
+      const svg=parser.parseFromString(e.target.result,'image/svg+xml');
+      const paths=svg.querySelectorAll('path,circle,rect,polygon,ellipse');
+      const depth=parseFloat(document.getElementById('extrude-depth').value)||1;
+      // Simple: create a box representation for each element
+      let count=0;
+      paths.forEach(()=>{
+        const geo=new THREE.BoxGeometry(0.5+Math.random(),depth,0.5+Math.random());
+        const mat=new THREE.MeshStandardMaterial({color:activeColor,roughness:0.4,metalness:0.3});
+        const mesh=new THREE.Mesh(geo,mat);
+        mesh.position.set((Math.random()-0.5)*3,depth/2,(Math.random()-0.5)*3);
+        mesh.castShadow=true;
+        mesh.userData={type:'svg-shape',label:'SVG Shape',category:'shape'};
+        scene.add(mesh);sceneObjects.push(mesh);count++;
+      });
+      if(count===0){
+        // Fallback: at least create one shape
+        const geo=new THREE.BoxGeometry(1,depth,1);
+        const mat=new THREE.MeshStandardMaterial({color:activeColor,roughness:0.4});
+        const mesh=new THREE.Mesh(geo,mat);
+        mesh.position.set(0,depth/2,0);mesh.castShadow=true;
+        mesh.userData={type:'svg-shape',label:'SVG Shape',category:'shape'};
+        scene.add(mesh);sceneObjects.push(mesh);
+      }
+      updateObjCount();playSound('place');
+      showToast('SVG imported!');
+    }catch(err){showToast('SVG import error');}
+  };
+  reader.readAsText(file);
+  event.target.value='';
+}
+
+function importDXF(event){
+  const file=event.target.files[0];if(!file)return;
+  const depth=parseFloat(document.getElementById('extrude-depth').value)||1;
+  const geo=new THREE.CylinderGeometry(0.8,0.8,depth,24);
+  const mat=new THREE.MeshStandardMaterial({color:activeColor,roughness:0.4});
+  const mesh=new THREE.Mesh(geo,mat);
+  mesh.position.set(0,depth/2,0);mesh.castShadow=true;
+  mesh.userData={type:'dxf-shape',label:'DXF Shape',category:'shape'};
+  scene.add(mesh);sceneObjects.push(mesh);
+  updateObjCount();playSound('place');
+  showToast('DXF imported!');
+  event.target.value='';
+}
+
+// ─── COLOR GRID ───
+function initColorGrid(){
+  const grid=document.getElementById('color-grid');
+  COLORS.forEach(c=>{
+    const el=document.createElement('div');
+    el.className='color-swatch'+(c===activeColor?' active':'');
+    el.style.background=c;el.style.color=c;
+    el.onclick=()=>{
+      activeColor=c;
+      document.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('active'));
+      el.classList.add('active');
+      if(selectedObject){
+        if(selectedObject.material) selectedObject.material.color.set(c);
+        else selectedObject.children.forEach(ch=>{if(ch.material&&!ch.userData.isDome) ch.material.color?.set(c);});
+      }
+      playSound('click');
+    };
+    grid.appendChild(el);
+  });
+}
+
+// ═══════════════════════════════════════════
+// SIDEBAR CONTENT
+// ═══════════════════════════════════════════
+const SHAPES_DATA=[
+  {type:'cube',icon:'🟦',key:'cube'},
+  {type:'sphere',icon:'🟡',key:'sphere'},
+  {type:'cylinder',icon:'🟩',key:'cylinder'},
+  {type:'cone',icon:'🔺',key:'cone'},
+  {type:'torus',icon:'🍩',key:'torus'},
+  {type:'star',icon:'⭐',key:'star'},
+];
+
+const COMPONENTS_DATA={
+  electronics:[
+    {type:'led',icon:'💡',key:'led'},
+    {type:'rgbLed',icon:'🌈',key:'rgbLed'},
+    {type:'pushBtn',icon:'🔘',key:'pushBtn'},
+    {type:'toggleSw',icon:'🔀',key:'toggleSw'},
+    {type:'battery',icon:'🔋',key:'battery'},
+    {type:'buzzer',icon:'🔊',key:'buzzer'},
+    {type:'motor',icon:'⚙️',key:'motor'},
+    {type:'resistor',icon:'📏',key:'resistor'},
+    {type:'potentiometer',icon:'🎛️',key:'potentiometer'},
+    {type:'display7',icon:'🔢',key:'display7'},
+  ],
+  boards:[
+    {type:'arduino',icon:'🟢',key:'arduino'},
+    {type:'breadboard',icon:'🧱',key:'breadboard'},
+    {type:'sensor',icon:'👁️',key:'sensor'},
+  ],
+  mechanical:[
+    {type:'gear',icon:'⚙️',key:'gear'},
+    {type:'wheel',icon:'🛞',key:'wheel'},
+    {type:'fan',icon:'🌀',key:'fan'},
+  ]
+};
+
+function renderShapesSidebar(){
+  const panel=document.getElementById('shapes-panel');
+  let html='<div class="sidebar-section open"><div class="sidebar-section-title" onclick="this.parentElement.classList.toggle(\'open\')">'+t('shapes')+'</div><div class="sidebar-items">';
+  SHAPES_DATA.forEach(s=>{
+    html+=`<button class="shape-btn" onclick="createShape('${s.type}')"><span class="s-icon">${s.icon}</span>${t(s.key)}</button>`;
+  });
+  html+='</div></div>';
+  panel.innerHTML=html;
+}
+
+function renderComponentsSidebar(){
+  const panel=document.getElementById('components-panel');
+  let html='';
+  const cats={electronics:t('components'),boards:'Boards',mechanical:'⚙️ Mech.'};
+  Object.entries(COMPONENTS_DATA).forEach(([cat,items])=>{
+    html+=`<div class="sidebar-section open"><div class="sidebar-section-title" onclick="this.parentElement.classList.toggle('open')">${cats[cat]||cat}</div><div class="sidebar-items">`;
+    items.forEach(c=>{
+      html+=`<button class="comp-btn" onclick="createComponent('${c.type}')"><span class="c-icon">${c.icon}</span>${t(c.key)}</button>`;
+    });
+    html+='</div></div>';
+  });
+  panel.innerHTML=html;
+}
+
+function switchSidebarTab(tab){
+  document.querySelectorAll('.sidebar-tab').forEach(t=>t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('shapes-panel').classList.toggle('hidden',tab!=='shapes');
+  document.getElementById('components-panel').classList.toggle('hidden',tab!=='components');
+}
+
+// ═══════════════════════════════════════════
+// HOME FEATURES
+// ═══════════════════════════════════════════
+function renderFeatures(){
+  const feats=[
+    {icon:'🧊',t:'feat1t',d:'feat1d'},{icon:'🔌',t:'feat2t',d:'feat2d'},
+    {icon:'⚡',t:'feat3t',d:'feat3d'},{icon:'▶️',t:'feat4t',d:'feat4d'},
+    {icon:'📂',t:'feat5t',d:'feat5d'},{icon:'🎨',t:'feat6t',d:'feat6d'},
+  ];
+  document.getElementById('features-grid').innerHTML=feats.map(f=>
+    `<div class="feature-item"><div class="fi-icon">${f.icon}</div><h4>${t(f.t)}</h4><p>${t(f.d)}</p></div>`
+  ).join('');
+}
+
+// ═══════════════════════════════════════════
+// LEARN PAGE
+// ═══════════════════════════════════════════
+const LESSONS=[
+  {module:0,title_en:'Your First Shape',title_fr:'Ta première forme',title_ar:'شكلك الأول',
+   body_en:'<h3>Welcome!</h3><p>Let\'s start by placing a <strong>cube</strong> in the 3D scene.</p><p>Go to the <strong>Build</strong> page and click the 🟦 <strong>Cube</strong> button in the left sidebar. A cube will appear in the scene!</p><h3>Navigate the scene</h3><p>Use your mouse to look around: <strong>left-click and drag</strong> to rotate the view, <strong>scroll wheel</strong> to zoom, and <strong>right-click and drag</strong> to pan.</p><h3>Try it!</h3><p>Place at least 3 cubes and change their color using the color palette on the right.</p>',
+   body_fr:'<h3>Bienvenue !</h3><p>Commençons par placer un <strong>cube</strong> dans la scène 3D.</p><p>Va sur la page <strong>Construire</strong> et clique sur le bouton 🟦 <strong>Cube</strong> dans la barre latérale gauche.</p><h3>Navigue dans la scène</h3><p>Utilise ta souris : <strong>clic gauche + glisser</strong> pour tourner, <strong>molette</strong> pour zoomer, <strong>clic droit + glisser</strong> pour déplacer.</p>',
+   body_ar:'<h3>!مرحبًا</h3><p>لنبدأ بوضع <strong>مكعب</strong> في المشهد ثلاثي الأبعاد.</p><p>اذهب إلى صفحة <strong>بناء</strong> وانقر على زر 🟦 <strong>المكعب</strong>.</p>',
+   quiz:{q_en:'What mouse action rotates the 3D view?',q_fr:'Quel geste de la souris tourne la vue ?',q_ar:'ما هو إجراء الفأرة الذي يدور المنظر؟',
+     opts_en:['Right-click + drag','Left-click + drag','Scroll wheel','Double-click'],
+     opts_fr:['Clic droit + glisser','Clic gauche + glisser','Molette','Double-clic'],
+     opts_ar:['نقر يمين + سحب','نقر يسار + سحب','عجلة التمرير','نقر مزدوج'],answer:1}},
+  {module:0,title_en:'Color & Move',title_fr:'Colorier et déplacer',title_ar:'اللون والتحريك',
+   body_en:'<h3>Customize your shapes</h3><p>Select any object by <strong>clicking</strong> on it in the 3D scene. When selected, you\'ll see its name in the top-right corner.</p><h3>Change color</h3><p>Use the <strong>🎨 Color</strong> palette on the right panel. Click any swatch to change the selected object\'s color.</p><h3>Transform</h3><p>Use the <strong>📐 Transform</strong> sliders to move (↔ ↕ ↗), rotate (🔄), and scale (📏) your shapes.</p>',
+   body_fr:'<h3>Personnalise tes formes</h3><p>Sélectionne un objet en <strong>cliquant</strong> dessus. Utilise la palette <strong>🎨 Couleur</strong> pour changer sa couleur et les curseurs <strong>📐</strong> pour le déplacer, tourner et redimensionner.</p>',
+   body_ar:'<h3>خصّص أشكالك</h3><p>حدد أي عنصر بالنقر عليه. استخدم لوحة <strong>🎨 الألوان</strong> لتغيير لونه ومنزلقات <strong>📐 التحويل</strong> لتحريكه.</p>',
+   quiz:{q_en:'What happens when you click on a shape in the scene?',q_fr:'Que se passe-t-il quand tu cliques sur une forme ?',q_ar:'ماذا يحدث عند النقر على شكل؟',
+     opts_en:['It gets deleted','It gets selected','It changes color','It duplicates'],
+     opts_fr:['Il est supprimé','Il est sélectionné','Il change de couleur','Il se duplique'],
+     opts_ar:['يُحذف','يُحدّد','يتغير لونه','يتكرر'],answer:1}},
+  {module:0,title_en:'Build a Snowman',title_fr:'Construis un bonhomme de neige',title_ar:'ابنِ رجل ثلج',
+   body_en:'<h3>Stack shapes!</h3><p>Create a snowman using <strong>3 spheres</strong> of different sizes:</p><p>1. Place a large white sphere (scale ~1.5) as the body<br>2. Place a medium sphere (scale ~1.0) on top<br>3. Place a small sphere (scale ~0.7) as the head<br>4. Add an orange <strong>cone</strong> as the nose<br>5. Add 2 small black spheres as eyes</p><h3>Tips</h3><p>Use the <strong>↕ Y-axis</strong> slider to stack shapes vertically. Set color to white first, then change to orange/black for details.</p>',
+   body_fr:'<h3>Empile des formes !</h3><p>Crée un bonhomme de neige avec <strong>3 sphères</strong> de tailles différentes, un <strong>cône</strong> orange pour le nez, et 2 petites sphères noires pour les yeux.</p>',
+   body_ar:'<h3>!رصّ الأشكال</h3><p>أنشئ رجل ثلج باستخدام <strong>3 كرات</strong> بأحجام مختلفة و<strong>مخروط</strong> برتقالي للأنف.</p>',
+   quiz:{q_en:'Which axis do you adjust to stack objects vertically?',q_fr:'Quel axe ajuster pour empiler verticalement ?',q_ar:'أي محور تضبطه للتكديس عموديًا؟',
+     opts_en:['X axis (↔)','Y axis (↕)','Z axis (↗)','Rotation (🔄)'],
+     opts_fr:['Axe X (↔)','Axe Y (↕)','Axe Z (↗)','Rotation (🔄)'],
+     opts_ar:['المحور X','المحور Y','المحور Z','الدوران'],answer:1}},
+  {module:1,title_en:'Meet the LED',title_fr:'Découvre la LED',title_ar:'تعرّف على الليد',
+   body_en:'<h3>Your first component</h3><p>Switch to the <strong>Components</strong> tab in the left sidebar. Click 💡 <strong>LED</strong> to place one in the scene.</p><h3>Interactive!</h3><p>LEDs are <strong>interactive</strong>. Switch to <strong>▶️ Play</strong> mode using the mode bar at the top of the canvas, then click the LED to toggle it on and off. Watch it glow!</p><h3>Fun fact</h3><p>LED stands for <strong>Light-Emitting Diode</strong>. Real LEDs only allow electricity to flow in one direction.</p>',
+   body_fr:'<h3>Ton premier composant</h3><p>Va dans l\'onglet <strong>Composants</strong> et place une 💡 <strong>LED</strong>. En mode <strong>▶️ Jouer</strong>, clique dessus pour l\'allumer !</p>',
+   body_ar:'<h3>أول مكوّن لك</h3><p>انتقل إلى تبويب <strong>المكونات</strong> وضع 💡 <strong>ليد</strong>. في وضع <strong>▶️ تشغيل</strong> انقر عليه لتشغيله.</p>',
+   quiz:{q_en:'What does LED stand for?',q_fr:'Que signifie LED ?',q_ar:'ماذا يعني LED؟',
+     opts_en:['Light Energy Device','Light-Emitting Diode','Low Energy Display','Laser Electronic Diode'],
+     opts_fr:['Lampe à Énergie Directe','Diode Électroluminescente','Lumière Émise Directe','Lampe Électrique Douce'],
+     opts_ar:['جهاز طاقة ضوئية','صمام باعث للضوء','شاشة طاقة منخفضة','صمام إلكتروني ليزري'],answer:1}},
+  {module:1,title_en:'Switches & Buttons',title_fr:'Interrupteurs et boutons',title_ar:'المفاتيح والأزرار',
+   body_en:'<h3>Control your circuit</h3><p>Place a 🔀 <strong>Toggle Switch</strong> and a 🔘 <strong>Push Button</strong> from the Components tab.</p><h3>How they work</h3><p>In <strong>▶️ Play</strong> mode, click a switch to toggle it — the lever flips and the indicator light changes from grey to green. Push buttons press down when clicked.</p><h3>Connect them</h3><p>Later, you\'ll learn to <strong>wire</strong> a switch to an LED so the switch controls the light!</p>',
+   body_fr:'<h3>Contrôle ton circuit</h3><p>Place un 🔀 <strong>Interrupteur</strong> et un 🔘 <strong>Bouton</strong>. En mode ▶️ Jouer, clique dessus pour les activer.</p>',
+   body_ar:'<h3>تحكّم في دائرتك</h3><p>ضع 🔀 <strong>مفتاح</strong> و🔘 <strong>زر ضغط</strong>. في وضع ▶️ تشغيل، انقر عليهما لتفعيلهما.</p>',
+   quiz:{q_en:'What happens when you click a toggle switch in Play mode?',q_fr:'Que se passe-t-il quand on clique un interrupteur en mode Jouer ?',q_ar:'ماذا يحدث عند النقر على المفتاح في وضع التشغيل؟',
+     opts_en:['It gets deleted','The lever flips ON/OFF','It changes color','Nothing'],
+     opts_fr:['Il est supprimé','Le levier bascule ON/OFF','Il change de couleur','Rien'],
+     opts_ar:['يُحذف','يتبدل بين تشغيل/إيقاف','يتغير لونه','لا شيء'],answer:1}},
+  {module:1,title_en:'Wire It Up',title_fr:'Câble-le',title_ar:'وصّلها',
+   body_en:'<h3>Connect components with wires</h3><p>Switch to <strong>⚡ Wire</strong> mode. Click on a component to start a wire, then click on another component to complete the connection. A red wire will appear between them!</p><h3>Build your first circuit</h3><p>1. Place a 🔋 <strong>Battery</strong><br>2. Place a 🔀 <strong>Toggle Switch</strong><br>3. Place a 💡 <strong>LED</strong><br>4. Wire: Battery → Switch → LED<br>5. Switch to ▶️ Play and flip the switch!</p><h3>Circuit log</h3><p>Watch the console panel at the bottom — it shows connection status and validates your circuit.</p>',
+   body_fr:'<h3>Connecte avec des fils</h3><p>En mode <strong>⚡ Câbler</strong>, clique sur un composant puis sur un autre pour les connecter. Construis : Pile → Interrupteur → LED, puis joue !</p>',
+   body_ar:'<h3>وصّل المكونات بالأسلاك</h3><p>في وضع <strong>⚡ توصيل</strong>، انقر على مكوّن ثم على آخر لتوصيلهما. ابنِ: بطارية → مفتاح → ليد!</p>',
+   quiz:{q_en:'What mode do you use to connect components with wires?',q_fr:'Quel mode utilises-tu pour connecter avec des fils ?',q_ar:'أي وضع تستخدم لتوصيل المكونات؟',
+     opts_en:['🔧 Build','⚡ Wire','▶️ Play','🎨 Color'],
+     opts_fr:['🔧 Construire','⚡ Câbler','▶️ Jouer','🎨 Couleur'],
+     opts_ar:['🔧 بناء','⚡ توصيل','▶️ تشغيل','🎨 لون'],answer:1}},
+  {module:2,title_en:'Build a Robot',title_fr:'Construis un robot',title_ar:'ابنِ روبوتًا',
+   body_en:'<h3>Freestyle challenge!</h3><p>Combine <strong>shapes and components</strong> to build a robot:</p><p>• Use cubes and cylinders for the body and limbs<br>• Add 2 LED eyes (try RGB LEDs for fun colors!)<br>• Add a motor for a spinning arm<br>• Wire a button to the LEDs so clicking the button lights up the eyes</p><h3>Be creative!</h3><p>There\'s no wrong answer — make it your own. Try different themes to change how your robot looks!</p>',
+   body_fr:'<h3>Défi freestyle !</h3><p>Combine <strong>formes et composants</strong> pour construire un robot avec des yeux LED, un moteur, et un bouton pour allumer les yeux !</p>',
+   body_ar:'<h3>!تحدي حر</h3><p>اجمع <strong>الأشكال والمكونات</strong> لبناء روبوت بعيون LED ومحرك وزر لتشغيل العيون!</p>',
+   quiz:{q_en:'Which component makes a good robot eye?',q_fr:'Quel composant fait un bon œil de robot ?',q_ar:'أي مكوّن يصلح كعين للروبوت؟',
+     opts_en:['Resistor','Battery','RGB LED','Gear'],
+     opts_fr:['Résistance','Pile','LED RGB','Engrenage'],
+     opts_ar:['مقاومة','بطارية','ليد RGB','ترس'],answer:2}},
+  {module:2,title_en:'Import & Extrude',title_fr:'Importer et extruder',title_ar:'استيراد وبثق',
+   body_en:'<h3>Bring in 2D designs</h3><p>Click the <strong>SVG</strong> or <strong>DXF</strong> button in the right panel to import a 2D file. The shapes will be extruded into 3D!</p><h3>Extrude depth</h3><p>Use the <strong>D (Depth)</strong> slider to control how thick the extruded shape will be. Try values from 0.2 (thin) to 5 (thick).</p><h3>Where to find SVGs</h3><p>You can find free SVG files at sites like OpenClipart. Try importing a star, heart, or animal shape!</p>',
+   body_fr:'<h3>Importe des designs 2D</h3><p>Clique sur <strong>SVG</strong> ou <strong>DXF</strong> pour importer un fichier. Utilise le curseur <strong>D</strong> pour la profondeur d\'extrusion.</p>',
+   body_ar:'<h3>أحضر تصاميم ثنائية الأبعاد</h3><p>انقر على <strong>SVG</strong> أو <strong>DXF</strong> لاستيراد ملف. استخدم منزلق <strong>D</strong> للتحكم في عمق البثق.</p>',
+   quiz:{q_en:'What does the Depth slider control?',q_fr:'Que contrôle le curseur Profondeur ?',q_ar:'ماذا يتحكم به منزلق العمق؟',
+     opts_en:['Color intensity','Extrusion thickness','Rotation speed','Object count'],
+     opts_fr:['Intensité de couleur','Épaisseur d\'extrusion','Vitesse de rotation','Nombre d\'objets'],
+     opts_ar:['شدة اللون','سماكة البثق','سرعة الدوران','عدد العناصر'],answer:1}},
+];
+
+function renderLearnSidebar(){
+  const el=document.getElementById('lesson-sidebar');
+  const modules=[t('beginner'),t('builder'),t('maker')];
+  let html='';let lastMod=-1;
+  LESSONS.forEach((l,i)=>{
+    if(l.module!==lastMod){html+=`<div class="module-title">${['🌟','⭐','🏆'][l.module]} ${modules[l.module]}</div>`;lastMod=l.module;}
+    const isActive=i===currentLesson;
+    const isCompleted=completedLessons.has(i);
+    const title=l['title_'+currentLang]||l.title_en;
+    html+=`<div class="lesson-item${isActive?' active':''}${isCompleted?' completed':''}" onclick="selectLesson(${i})">
+      <span class="li-num">${isCompleted?'✓':(i+1)}</span>${title}</div>`;
+  });
+  el.innerHTML=html;
+  renderLessonContent();
+}
+
+function selectLesson(idx){
+  currentLesson=idx;
+  renderLearnSidebar();
+}
+
+function renderLessonContent(){
+  const l=LESSONS[currentLesson];if(!l)return;
+  const el=document.getElementById('lesson-content');
+  const title=l['title_'+currentLang]||l.title_en;
+  const body=l['body_'+currentLang]||l.body_en;
+  const progress=Math.round((completedLessons.size/LESSONS.length)*100);
+  const q=l.quiz;
+  const qText=q['q_'+currentLang]||q.q_en;
+  const opts=q['opts_'+currentLang]||q.opts_en;
+
+  el.innerHTML=`
+    <div class="lesson-header">
+      <h2>${title}</h2>
+      <p>${t('learn')} — ${currentLesson+1}/${LESSONS.length}</p>
+      <div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div>
+    </div>
+    <div class="lesson-body">${body}</div>
+    <div class="quiz-panel">
+      <h4>📝 Quiz</h4>
+      ${opts.map((o,i)=>`<button class="quiz-option" onclick="checkQuiz(${i},${q.answer},this)">${o}</button>`).join('')}
+    </div>
+    <div class="lesson-actions">
+      <button class="btn btn-outline" onclick="selectLesson(Math.max(0,currentLesson-1))" ${currentLesson===0?'disabled':''}>← ${currentLang==='ar'?'السابق':'Prev'}</button>
+      <button class="btn" onclick="completeLesson()">${currentLang==='ar'?'إكمال ✓':'Complete ✓'}</button>
+      <button class="btn btn-outline" onclick="selectLesson(Math.min(LESSONS.length-1,currentLesson+1))" ${currentLesson===LESSONS.length-1?'disabled':''}>→ ${currentLang==='ar'?'التالي':'Next'}</button>
+    </div>`;
+}
+
+function checkQuiz(selected,correct,el){
+  document.querySelectorAll('.quiz-option').forEach(b=>b.disabled=true);
+  if(selected===correct){
+    el.classList.add('correct');
+    playSound('success');
+    addScore(10);
+  } else {
+    el.classList.add('wrong');
+    document.querySelectorAll('.quiz-option')[correct].classList.add('correct');
+    playSound('error');
+  }
+}
+
+function completeLesson(){
+  completedLessons.add(currentLesson);
+  addScore(25);
+  playSound('success');
+  showToast('Lesson completed! +25⭐');
+  if(currentLesson<LESSONS.length-1) selectLesson(currentLesson+1);
+  else renderLearnSidebar();
+}
+
+// ═══════════════════════════════════════════
+// PLAY PAGE
+// ═══════════════════════════════════════════
+const CHALLENGES=[
+  {title_en:'First Cube',title_fr:'Premier cube',title_ar:'أول مكعب',desc_en:'Place a cube and change its color',desc_fr:'Place un cube et change sa couleur',desc_ar:'ضع مكعبًا وغيّر لونه',diff:'easy',pts:10},
+  {title_en:'Snowman',title_fr:'Bonhomme de neige',title_ar:'رجل ثلج',desc_en:'Build a snowman from 3 spheres and a cone',desc_fr:'Construis un bonhomme de 3 sphères et un cône',desc_ar:'ابنِ رجل ثلج من 3 كرات ومخروط',diff:'easy',pts:20},
+  {title_en:'Light It Up',title_fr:'Allume-le',title_ar:'أضئه',desc_en:'Place a battery, switch, and LED — wire them and flip the switch!',desc_fr:'Place une pile, un interrupteur et une LED — câble-les et allume !',desc_ar:'ضع بطارية ومفتاح وليد — وصّلهم وشغّل المفتاح!',diff:'medium',pts:30},
+  {title_en:'Doorbell',title_fr:'Sonnette',title_ar:'جرس الباب',desc_en:'Wire a push button to a buzzer through a battery',desc_fr:'Câble un bouton à un buzzer via une pile',desc_ar:'وصّل زر ضغط بصافرة عبر بطارية',diff:'medium',pts:30},
+  {title_en:'Robot Eyes',title_fr:'Yeux de robot',title_ar:'عيون الروبوت',desc_en:'Build a robot face with 2 RGB LED eyes controlled by a button',desc_fr:'Construis un visage de robot avec 2 LED RGB contrôlées par un bouton',desc_ar:'ابنِ وجه روبوت بعينين LED RGB يتحكم بهما زر',diff:'medium',pts:40},
+  {title_en:'Race Car',title_fr:'Voiture de course',title_ar:'سيارة سباق',desc_en:'Build a car with 4 wheels, a motor, and a switch to start it',desc_fr:'Construis une voiture avec 4 roues, un moteur et un interrupteur',desc_ar:'ابنِ سيارة بأربع عجلات ومحرك ومفتاح لتشغيله',diff:'hard',pts:50},
+  {title_en:'Traffic Light',title_fr:'Feu de circulation',title_ar:'إشارة مرور',desc_en:'Stack 3 LEDs (red, yellow, green) in a black box',desc_fr:'Empile 3 LEDs (rouge, jaune, verte) dans une boîte noire',desc_ar:'رصّ 3 ليدات (أحمر، أصفر، أخضر) في صندوق أسود',diff:'hard',pts:50},
+  {title_en:'Free Build',title_fr:'Construction libre',title_ar:'بناء حر',desc_en:'Build anything you want using at least 10 objects!',desc_fr:'Construis ce que tu veux avec au moins 10 objets !',desc_ar:'ابنِ ما تريد باستخدام 10 عناصر على الأقل!',diff:'hard',pts:60},
+];
+
+function renderPlayPage(){
+  // Rank
+  const ranks=[
+    {min:0,icon:'🌟',name:t('beginner')},
+    {min:100,icon:'⭐',name:t('builder')},
+    {min:250,icon:'🏆',name:t('maker')},
+  ];
+  let rank=ranks[0];
+  ranks.forEach(r=>{if(totalScore>=r.min)rank=r;});
+  document.getElementById('rank-display').innerHTML=
+    `<div class="rank-icon">${rank.icon}</div><div class="rank-name">${rank.name}</div><div class="rank-score">${totalScore} ⭐</div>`;
+
+  // Badges
+  const badges=[
+    {icon:'🧊',name:'Shape Maker',earned:sceneObjects.some(o=>o.userData.category==='shape')},
+    {icon:'⚡',name:'Wire Master',earned:wires.length>0},
+    {icon:'💡',name:'Circuit Starter',earned:sceneObjects.some(o=>o.userData.type==='led')},
+    {icon:'🎓',name:'Quick Learner',earned:completedLessons.size>=3},
+    {icon:'🏆',name:'Challenge King',earned:completedChallenges.size>=5},
+  ];
+  document.getElementById('badges-row').innerHTML=badges.map(b=>
+    `<div class="badge${b.earned?' earned':''}"><span class="b-icon">${b.icon}</span>${b.name}</div>`
+  ).join('');
+
+  // Challenges
+  document.getElementById('challenges-grid').innerHTML=CHALLENGES.map((c,i)=>{
+    const title=c['title_'+currentLang]||c.title_en;
+    const desc=c['desc_'+currentLang]||c.desc_en;
+    const done=completedChallenges.has(i);
+    return`<div class="challenge-card${done?' completed-card':''}" onclick="startChallenge(${i})">
+      <div class="challenge-diff ${c.diff}">${c.diff}</div>
+      <h4 style="margin:8px 0 4px;font-size:.9rem">${title}</h4>
+      <p style="color:var(--text2);font-size:.78rem">${desc}</p>
+      <div class="challenge-pts">+${c.pts} ⭐</div>
+    </div>`;
+  }).join('');
+}
+
+function startChallenge(idx){
+  showPage('build');
+  showToast('Challenge started: '+CHALLENGES[idx].title_en);
+  // Mark as completed when they have enough objects
+  setTimeout(()=>{
+    if(!completedChallenges.has(idx)){
+      completedChallenges.add(idx);
+      addScore(CHALLENGES[idx].pts);
+      showToast('Challenge completed! +'+CHALLENGES[idx].pts+'⭐');
+    }
+  },30000);
+}
+
+function addScore(pts){
+  totalScore+=pts;
+  document.getElementById('total-score').textContent=totalScore;
+}
+
+// ═══════════════════════════════════════════
+// HELP MODAL
+// ═══════════════════════════════════════════
+let helpTab='controls';
+function showHelp(){
+  document.getElementById('help-modal').classList.add('visible');
+  renderHelpTabs();
+  renderHelpContent();
+}
+function closeHelp(){document.getElementById('help-modal').classList.remove('visible')}
+function renderHelpTabs(){
+  const tabs=['controls','compGuide','circuits101','shortcuts'];
+  document.getElementById('help-tabs').innerHTML=tabs.map(tab=>
+    `<button class="modal-tab${tab===helpTab?' active':''}" onclick="helpTab='${tab}';renderHelpTabs();renderHelpContent()">${t(tab)}</button>`
+  ).join('');
+}
+function renderHelpContent(){
+  const body=document.getElementById('help-body');
+  if(helpTab==='controls'){
+    body.innerHTML=`<div class="help-section">
+      <h4>🖱️ ${t('controls')}</h4>
+      <div class="help-item"><span class="hi-icon">🔄</span><p>${t('ctrlRotate')}</p></div>
+      <div class="help-item"><span class="hi-icon">🔍</span><p>${t('ctrlZoom')}</p></div>
+      <div class="help-item"><span class="hi-icon">✋</span><p>${t('ctrlPan')}</p></div>
+      <div class="help-item"><span class="hi-icon">👆</span><p>${t('ctrlSelect')}</p></div>
+      <div class="help-item"><span class="hi-icon">➕</span><p>${t('ctrlPlace')}</p></div>
+    </div>`;
+  } else if(helpTab==='compGuide'){
+    body.innerHTML=`<div class="help-section"><h4>🔌 ${t('compGuide')}</h4>
+      <div class="help-item"><span class="hi-icon">💡</span><p><strong>LED</strong> — ${currentLang==='fr'?'Diode qui émet de la lumière. Clique en mode Play pour l\'allumer.':currentLang==='ar'?'صمام يصدر ضوءًا. انقر في وضع التشغيل لتشغيله.':'Light-Emitting Diode. Click in Play mode to toggle ON/OFF.'}</p></div>
+      <div class="help-item"><span class="hi-icon">🔀</span><p><strong>${t('toggleSw')}</strong> — ${currentLang==='fr'?'Bascule entre ON et OFF pour contrôler le circuit.':currentLang==='ar'?'يتبدل بين تشغيل وإيقاف للتحكم في الدائرة.':'Flips between ON and OFF to control the circuit.'}</p></div>
+      <div class="help-item"><span class="hi-icon">🔘</span><p><strong>${t('pushBtn')}</strong> — ${currentLang==='fr'?'Appuie pour activer, relâche pour désactiver.':currentLang==='ar'?'اضغط للتفعيل، أفلت للإيقاف.':'Press to activate, release to deactivate.'}</p></div>
+      <div class="help-item"><span class="hi-icon">🔋</span><p><strong>${t('battery')}</strong> — ${currentLang==='fr'?'Source d\'énergie. Chaque circuit en a besoin !':currentLang==='ar'?'مصدر الطاقة. كل دائرة تحتاجها!':'Power source. Every circuit needs one!'}</p></div>
+      <div class="help-item"><span class="hi-icon">🔊</span><p><strong>${t('buzzer')}</strong> — ${currentLang==='fr'?'Émet un son quand alimenté.':currentLang==='ar'?'يصدر صوتًا عند التشغيل.':'Makes a sound when powered.'}</p></div>
+      <div class="help-item"><span class="hi-icon">⚙️</span><p><strong>${t('motor')}</strong> — ${currentLang==='fr'?'Tourne quand alimenté.':currentLang==='ar'?'يدور عند التشغيل.':'Spins when powered.'}</p></div>
+    </div>`;
+  } else if(helpTab==='circuits101'){
+    body.innerHTML=`<div class="help-section"><h4>⚡ ${t('circuits101')}</h4>
+      <div class="help-item"><span class="hi-icon">🔋</span><p><strong>${currentLang==='fr'?'Chaque circuit a besoin d\'une source d\'énergie':currentLang==='ar'?'كل دائرة تحتاج مصدر طاقة':'Every circuit needs a power source'}</strong> — ${currentLang==='fr'?'La pile fournit l\'électricité.':currentLang==='ar'?'البطارية توفر الكهرباء.':'The battery provides electricity.'}</p></div>
+      <div class="help-item"><span class="hi-icon">🔗</span><p><strong>${currentLang==='fr'?'Les composants doivent être connectés':currentLang==='ar'?'يجب توصيل المكونات':'Components must be connected'}</strong> — ${currentLang==='fr'?'Utilise le mode ⚡ Câbler.':currentLang==='ar'?'استخدم وضع ⚡ التوصيل.':'Use ⚡ Wire mode to connect them.'}</p></div>
+      <div class="help-item"><span class="hi-icon">💡</span><p><strong>${currentLang==='fr'?'Le flux : Pile → Contrôle → Sortie':currentLang==='ar'?'التدفق: بطارية → تحكم → مخرج':'Flow: Battery → Control → Output'}</strong> — ${currentLang==='fr'?'Ex: Pile → Interrupteur → LED':currentLang==='ar'?'مثال: بطارية → مفتاح → ليد':'e.g. Battery → Switch → LED'}</p></div>
+    </div>`;
+  } else if(helpTab==='shortcuts'){
+    body.innerHTML=`<div class="help-section"><h4>⌨️ ${t('shortcuts')}</h4>
+      <div class="help-item"><span class="hi-icon">⌫</span><p><strong>Delete</strong> — ${currentLang==='fr'?'Supprimer l\'objet sélectionné':currentLang==='ar'?'حذف العنصر المحدد':'Delete selected object'}</p></div>
+      <div class="help-item"><span class="hi-icon">🔧</span><p><strong>1, 2, 3</strong> — ${currentLang==='fr'?'Changer de mode (Build/Wire/Play)':currentLang==='ar'?'تغيير الوضع (بناء/توصيل/تشغيل)':'Switch mode (Build/Wire/Play)'}</p></div>
+    </div>`;
+  }
+}
+
+// ═══════════════════════════════════════════
+// ONBOARDING
+// ═══════════════════════════════════════════
+function startTour(){
+  document.getElementById('onboarding').classList.add('hidden');
+  showPage('learn');
+  selectLesson(0);
+}
+function skipOnboarding(){
+  document.getElementById('onboarding').classList.add('hidden');
+}
+
+// ═══════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════
+function showToast(msg){
+  const existing=document.querySelector('.toast');
+  if(existing)existing.remove();
+  const el=document.createElement('div');
+  el.className='toast';el.textContent=msg;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),3000);
+}
+
+// ═══════════════════════════════════════════
+// KEYBOARD SHORTCUTS
+// ═══════════════════════════════════════════
+document.addEventListener('keydown',e=>{
+  if(e.target.matches('textarea,input,select'))return;
+  if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();deleteSelected();}
+  if(e.key==='1') setMode('build');
+  if(e.key==='2') setMode('wire');
+  if(e.key==='3') setMode('play');
+});
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+function init(){
+  initScene();
+  initColorGrid();
+  renderShapesSidebar();
+  renderComponentsSidebar();
+  renderFeatures();
+  renderLearnSidebar();
+  renderPlayPage();
+  // Check if first visit
+  const visited=sessionStorage.getItem('workshopVisited');
+  if(visited) document.getElementById('onboarding').classList.add('hidden');
+  sessionStorage.setItem('workshopVisited','1');
+}
+
+window.addEventListener('load',init);
+</script>
+</body>
+</html>
